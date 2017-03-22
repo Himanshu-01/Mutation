@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{7E4520C1-0A0A-4B30-9F9C-38AB60747F62}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>HaloPlugins</RootNamespace>
+    <AssemblyName>HaloPlugins</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;SANITY_CHECK</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Engine\Engine.cs" />
+    <Compile Include="EngineManager.cs" />
+    <Compile Include="Definitions\H2\Xbox\Raw Definitions\AnimationDefinition.cs" />
+    <Compile Include="Definitions\H2\Xbox\Raw Definitions\BitmapDefinition.cs" />
+    <Compile Include="Definitions\H2\Xbox\Raw Definitions\BspDefinition.cs" />
+    <Compile Include="Definitions\H2\Xbox\Raw Definitions\DecoratorDefinition.cs" />
+    <Compile Include="Definitions\H2\Xbox\Raw Definitions\LightmapDefinition.cs" />
+    <Compile Include="Definitions\H2\Xbox\Raw Definitions\ModelDefinition.cs" />
+    <Compile Include="Definitions\H2\Xbox\Raw Definitions\ParticleDefinition.cs" />
+    <Compile Include="Definitions\H2\Xbox\Raw Definitions\SoundDefinition.cs" />
+    <Compile Include="Definitions\H2\Xbox\Raw Definitions\WeatherDefinition.cs" />
+    <Compile Include="Engine\Halo2Xbox.cs" />
+    <Compile Include="Objects\Color\ColorArgb.cs" />
+    <Compile Include="Objects\Color\ColorRgb.cs" />
+    <Compile Include="Objects\Color\RealColorArgb.cs" />
+    <Compile Include="Objects\Color\RealColorRgb.cs" />
+    <Compile Include="Objects\Data\Enum.cs" />
+    <Compile Include="Objects\Data\Flags.cs" />
+    <Compile Include="Objects\Data\Padding.cs" />
+    <Compile Include="Objects\Data\Value.cs" />
+    <Compile Include="Objects\MetaNode.cs" />
+    <Compile Include="Objects\Reference\BlockIndex.cs" />
+    <Compile Include="Objects\Reference\InfoBlock.cs" />
+    <Compile Include="Objects\Reference\StringId.cs" />
+    <Compile Include="Objects\Reference\TagBlock.cs" />
+    <Compile Include="Objects\Reference\TagIndex.cs" />
+    <Compile Include="Objects\Reference\TagReference.cs" />
+    <Compile Include="Objects\Strings\LongString.cs" />
+    <Compile Include="Objects\Strings\ShortString.cs" />
+    <Compile Include="Objects\Strings\Tag.cs" />
+    <Compile Include="Objects\Todo.cs" />
+    <Compile Include="Objects\Vector\AngleBounds.cs" />
+    <Compile Include="Objects\Vector\Point2d.cs" />
+    <Compile Include="Objects\Vector\RealAngle2d.cs" />
+    <Compile Include="Objects\Vector\RealAngle3d.cs" />
+    <Compile Include="Objects\Vector\RealBounds.cs" />
+    <Compile Include="Objects\Vector\RealPlane2d.cs" />
+    <Compile Include="Objects\Vector\RealPlane3d.cs" />
+    <Compile Include="Objects\Vector\RealPoint2d.cs" />
+    <Compile Include="Objects\Vector\RealPoint3d.cs" />
+    <Compile Include="Objects\Vector\RealQuaternion.cs" />
+    <Compile Include="Objects\Vector\RealVector2d.cs" />
+    <Compile Include="Objects\Vector\RealVector3d.cs" />
+    <Compile Include="Objects\Vector\Rectangle2d.cs" />
+    <Compile Include="Objects\Vector\ShortBounds.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Definitions\RawDefinition.cs" />
+    <Compile Include="Definitions\H2\Xbox\adlg.cs" />
+    <Compile Include="Definitions\H2\Xbox\ant!.cs" />
+    <Compile Include="Definitions\H2\Xbox\Base Types\devi.cs" />
+    <Compile Include="Definitions\H2\Xbox\Base Types\item.cs" />
+    <Compile Include="Definitions\H2\Xbox\Base Types\obje.cs" />
+    <Compile Include="Definitions\H2\Xbox\Base Types\unit.cs" />
+    <Compile Include="Definitions\H2\Xbox\bipd.cs" />
+    <Compile Include="Definitions\H2\Xbox\bitm.cs" />
+    <Compile Include="Definitions\H2\Xbox\bloc.cs" />
+    <Compile Include="Definitions\H2\Xbox\bsdt.cs" />
+    <Compile Include="Definitions\H2\Xbox\char.cs" />
+    <Compile Include="Definitions\H2\Xbox\clwd.cs" />
+    <Compile Include="Definitions\H2\Xbox\coll.cs" />
+    <Compile Include="Definitions\H2\Xbox\colo.cs" />
+    <Compile Include="Definitions\H2\Xbox\cont.cs" />
+    <Compile Include="Definitions\H2\Xbox\crea.cs" />
+    <Compile Include="Definitions\H2\Xbox\ctrl.cs" />
+    <Compile Include="Definitions\H2\Xbox\deca.cs" />
+    <Compile Include="Definitions\H2\Xbox\DECR.cs" />
+    <Compile Include="Definitions\H2\Xbox\effe.cs" />
+    <Compile Include="Definitions\H2\Xbox\egor.cs" />
+    <Compile Include="Definitions\H2\Xbox\eqip.cs" />
+    <Compile Include="Definitions\H2\Xbox\fog..cs" />
+    <Compile Include="Definitions\H2\Xbox\foot.cs" />
+    <Compile Include="Definitions\H2\Xbox\fpch.cs" />
+    <Compile Include="Definitions\H2\Xbox\garb.cs" />
+    <Compile Include="Definitions\H2\Xbox\gldf.cs" />
+    <Compile Include="Definitions\H2\Xbox\goof.cs" />
+    <Compile Include="Definitions\H2\Xbox\hlmt.cs" />
+    <Compile Include="Definitions\H2\Xbox\hudg.cs" />
+    <Compile Include="Definitions\H2\Xbox\itmc.cs" />
+    <Compile Include="Definitions\H2\Xbox\jmad.cs" />
+    <Compile Include="Definitions\H2\Xbox\jpt!.cs" />
+    <Compile Include="Definitions\H2\Xbox\lens.cs" />
+    <Compile Include="Definitions\H2\Xbox\ligh.cs" />
+    <Compile Include="Definitions\H2\Xbox\lsnd.cs" />
+    <Compile Include="Definitions\H2\Xbox\ltmp.cs" />
+    <Compile Include="Definitions\H2\Xbox\mach.cs" />
+    <Compile Include="Definitions\H2\Xbox\matg.cs" />
+    <Compile Include="Definitions\H2\Xbox\mdlg.cs" />
+    <Compile Include="Definitions\H2\Xbox\MGS2.cs" />
+    <Compile Include="Definitions\H2\Xbox\mode.cs" />
+    <Compile Include="Definitions\H2\Xbox\mulg.cs" />
+    <Compile Include="Definitions\H2\Xbox\nhdt.cs" />
+    <Compile Include="Definitions\H2\Xbox\phmo.cs" />
+    <Compile Include="Definitions\H2\Xbox\phys.cs" />
+    <Compile Include="Definitions\H2\Xbox\pmov.cs" />
+    <Compile Include="Definitions\H2\Xbox\pphy.cs" />
+    <Compile Include="Definitions\H2\Xbox\proj.cs" />
+    <Compile Include="Definitions\H2\Xbox\prt3.cs" />
+    <Compile Include="Definitions\H2\Xbox\PRTM.cs" />
+    <Compile Include="Definitions\H2\Xbox\sbsp.cs" />
+    <Compile Include="Definitions\H2\Xbox\scen.cs" />
+    <Compile Include="Definitions\H2\Xbox\scnr.cs" />
+    <Compile Include="Definitions\H2\Xbox\sfx+.cs" />
+    <Compile Include="Definitions\H2\Xbox\shad.cs" />
+    <Compile Include="Definitions\H2\Xbox\sily.cs" />
+    <Compile Include="Definitions\H2\Xbox\skin.cs" />
+    <Compile Include="Definitions\H2\Xbox\sky..cs" />
+    <Compile Include="Definitions\H2\Xbox\sncl.cs" />
+    <Compile Include="Definitions\H2\Xbox\snd!.cs" />
+    <Compile Include="Definitions\H2\Xbox\snde.cs" />
+    <Compile Include="Definitions\H2\Xbox\snmx.cs" />
+    <Compile Include="Definitions\H2\Xbox\spas.cs" />
+    <Compile Include="Definitions\H2\Xbox\spk!.cs" />
+    <Compile Include="Definitions\H2\Xbox\ssce.cs" />
+    <Compile Include="Definitions\H2\Xbox\stem.cs" />
+    <Compile Include="Definitions\H2\Xbox\styl.cs" />
+    <Compile Include="Definitions\H2\Xbox\tdtl.cs" />
+    <Compile Include="Definitions\H2\Xbox\trak.cs" />
+    <Compile Include="Definitions\H2\Xbox\udlg.cs" />
+    <Compile Include="Definitions\H2\Xbox\ugh!.cs" />
+    <Compile Include="Definitions\H2\Xbox\unic.cs" />
+    <Compile Include="Definitions\H2\Xbox\vehc.cs" />
+    <Compile Include="Definitions\H2\Xbox\vehi.cs" />
+    <Compile Include="Definitions\H2\Xbox\vrtx.cs" />
+    <Compile Include="Definitions\H2\Xbox\weap.cs" />
+    <Compile Include="Definitions\H2\Xbox\weat.cs" />
+    <Compile Include="Definitions\H2\Xbox\wgit.cs" />
+    <Compile Include="Definitions\H2\Xbox\wgtz.cs" />
+    <Compile Include="Definitions\H2\Xbox\wigl.cs" />
+    <Compile Include="Definitions\H2\Xbox\_fx_.cs" />
+    <Compile Include="Definitions\TagDefinition.cs" />
+    <Compile Include="Todo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Blam\Blam.csproj">
+      <Project>{DCB31C0C-359C-42F6-8E43-EFDFFE6375AC}</Project>
+      <Name>Blam</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Global\Global.csproj">
+      <Project>{DB49062F-B6CC-4FE4-8218-86326EFAB97B}</Project>
+      <Name>Global</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IO\IO.csproj">
+      <Project>{13A4CE71-96C0-4553-B899-AF6C524FD3C9}</Project>
+      <Name>IO</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\h2x_stringids.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{6462FBEA-B885-4000-A287-DD4658AFB5BB}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Portal</RootNamespace>
+    <AssemblyName>Portal</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DevExpress.Utils.v9.1, Version=9.1.4.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL" />
+    <Reference Include="DevExpress.XtraEditors.v9.1, Version=9.1.4.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL" />
+    <Reference Include="SlimDX, Version=2.0.7.41, Culture=neutral, PublicKeyToken=b1b0c32fd1ffe4f9, processorArchitecture=x86" />
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Geometry.cs" />
+    <Compile Include="Model\Misc\Permutation.cs" />
+    <Compile Include="Object\ObjectProperties.cs" />
+    <Compile Include="Object\Permutation.cs" />
+    <Compile Include="Object\Region.cs" />
+    <Compile Include="Object\Variant.cs" />
+    <Compile Include="Shader\Bitmap.cs" />
+    <Compile Include="Cloth\Cloth.cs" />
+    <Compile Include="Collision\Bsp.cs" />
+    <Compile Include="Collision\CollisionModel.cs" />
+    <Compile Include="Collision\Edge.cs" />
+    <Compile Include="Collision\Permutation.cs" />
+    <Compile Include="Collision\Region.cs" />
+    <Compile Include="Collision\Surface.cs" />
+    <Compile Include="Decorator\Class.cs" />
+    <Compile Include="Decorator\DecoratorModel.cs" />
+    <Compile Include="Decorator\Model.cs" />
+    <Compile Include="Decorator\Permutation.cs" />
+    <Compile Include="Misc\RawData.cs" />
+    <Compile Include="RenderPortal\Camera.cs" />
+    <Compile Include="RenderPortal\IRenderable.cs" />
+    <Compile Include="Model\Misc\Material.cs" />
+    <Compile Include="Model\Misc\MarkerGroup.cs" />
+    <Compile Include="Model\Misc\Marker.cs" />
+    <Compile Include="Model\Misc\CompressionInfo.cs" />
+    <Compile Include="Model\RenderModel.cs" />
+    <Compile Include="Model\Misc\Node.cs" />
+    <Compile Include="Model\Resources\PartInfo.cs" />
+    <Compile Include="RenderPortal\PortalPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Misc\RawBlock.cs" />
+    <Compile Include="Model\Section.cs" />
+    <Compile Include="Model\Misc\Region.cs" />
+    <Compile Include="Shader\Shader.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DDS\DDS.csproj">
+      <Project>{E5F9F436-B92C-4870-8409-51D7C104E3CA}</Project>
+      <Name>DDS</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Global\Global.csproj">
+      <Project>{DB49062F-B6CC-4FE4-8218-86326EFAB97B}</Project>
+      <Name>Global</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\HaloControls\HaloControls.csproj">
+      <Project>{EFB2AADA-9BF0-4D89-9822-1CC37D7CC49F}</Project>
+      <Name>HaloControls</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\HaloObjects\HaloObjects.csproj">
+      <Project>{1A004D79-4829-4FA2-9E0A-EBFB11C43AED}</Project>
+      <Name>HaloObjects</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Xapien\Xapien.csproj">
+      <Project>{1F0A1B64-F47A-427A-A11E-BBEBF267C530}</Project>
+      <Name>Xapien</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

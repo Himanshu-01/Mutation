@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{1A004D79-4829-4FA2-9E0A-EBFB11C43AED}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>HaloObjects</RootNamespace>
+    <AssemblyName>HaloObjects</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Objects\Color\RealColorArgb.cs" />
+    <Compile Include="Objects\Color\RealColorRgb.cs" />
+    <Compile Include="Objects\Reference\BlockIndex.cs" />
+    <Compile Include="Objects\Reference\InfoBlock.cs" />
+    <Compile Include="Objects\Reference\TagIndex.cs" />
+    <Compile Include="Objects\Color\ColorRgb.cs" />
+    <Compile Include="Objects\Data\Flags.cs" />
+    <Compile Include="Objects\Strings\LongString.cs" />
+    <Compile Include="Objects\Color\ColorArgb.cs" />
+    <Compile Include="Objects\Strings\Tag.cs" />
+    <Compile Include="Objects\Vector\AngleBounds.cs" />
+    <Compile Include="Objects\Vector\RealAngle2d.cs" />
+    <Compile Include="Objects\Vector\RealAngle3d.cs" />
+    <Compile Include="Objects\Vector\RealBounds.cs" />
+    <Compile Include="Objects\Vector\RealPlane2d.cs" />
+    <Compile Include="Objects\Vector\RealPlane3d.cs" />
+    <Compile Include="Objects\Vector\RealPoint2d.cs" />
+    <Compile Include="Objects\Vector\Point2d.cs" />
+    <Compile Include="Objects\Strings\ShortString.cs" />
+    <Compile Include="Objects\Reference\TagBlock.cs" />
+    <Compile Include="RawDefinition.cs" />
+    <Compile Include="TagDefinition.cs" />
+    <Compile Include="Objects\Data\Enum.cs" />
+    <Compile Include="Objects\IMetaNode.cs" />
+    <Compile Include="Objects\Vector\RealPoint3d.cs" />
+    <Compile Include="Objects\Vector\RealQuaternion.cs" />
+    <Compile Include="Objects\Vector\RealVector2d.cs" />
+    <Compile Include="Objects\Vector\RealVector3d.cs" />
+    <Compile Include="Objects\Vector\Rectangle2d.cs" />
+    <Compile Include="Objects\Vector\ShortBounds.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Objects\Reference\StringId.cs" />
+    <Compile Include="Objects\Reference\TagReference.cs" />
+    <Compile Include="Objects\Data\Value.cs" />
+    <Compile Include="Objects\Data\Padding.cs" />
+    <Compile Include="Todo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Global\Global.csproj">
+      <Project>{DB49062F-B6CC-4FE4-8218-86326EFAB97B}</Project>
+      <Name>Global</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IO\IO.csproj">
+      <Project>{13A4CE71-96C0-4553-B899-AF6C524FD3C9}</Project>
+      <Name>IO</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

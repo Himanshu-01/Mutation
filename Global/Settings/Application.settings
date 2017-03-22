@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Global.Settings" GeneratedClassName="Application">
+  <Profiles />
+  <Settings>
+    <Setting Name="EnableDebugConsole" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="ConsoleHasCustomSettings" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="DefaultConsoleLocation" Type="System.Drawing.Point" Scope="User">
+      <Value Profile="(Default)">1920, 0</Value>
+    </Setting>
+    <Setting Name="DefaultConsoleSize" Type="System.Drawing.Size" Scope="User">
+      <Value Profile="(Default)">960, 1050</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
