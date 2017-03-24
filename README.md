@@ -7,9 +7,11 @@ Mutation is a tool that aims to be an all in one content creation tool and level
 The entire project is currently built in C# .Net and I hope to leave it this way, and possibly look to porting it to MacOS in the future. Below is a description of each project and what it is used for. For a more complete description of the projects including dependencies and usage info, see the Readme.md file in the respective project folder.
 
 * Blam
+
    Blam is a library that contains code I have reverse engineered from the Halo 2 PC HEK (Halo Editing Kit, ie Guerilla, Sapien, or Tool). While I was creating Mutation I decided to investigate how some of the underlying systems work in the real Bungie tools. This is just a dumping ground for my findings. It serves so real purpose for the project.
 
 * DDS
+
    DDS is a image library that is capable of encoding and decoding the various DXT image formats that are used in the game. Most of the encoding/decoding code was written by Jackson Cougar, I have just encapsulated it into a class for easy access throughout the project. It currently supports the following formats:
    * A8
    * Y8
@@ -28,4 +30,5 @@ The entire project is currently built in C# .Net and I hope to leave it this way
    * U8V8
 
 * Global
+
    The Global
