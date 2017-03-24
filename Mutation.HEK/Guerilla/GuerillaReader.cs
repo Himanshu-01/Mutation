@@ -73,7 +73,7 @@ namespace Mutation.HEK.Guerilla
                 this.TagGroups[i].Read(this.h2LangLib, this.reader);
 
                 // Read the tag block definition.
-                ReadTagBlockDefinition(this.TagGroups[i].definition_address, this.TagGroups[i].GroupTag.Equals("snd!"));
+                ReadTagBlockDefinition(this.TagGroups[i].definition_address, this.TagGroups[i].GroupTag.Equals("snd!"), null);
             }
 
             // Close the reader.
@@ -83,7 +83,7 @@ namespace Mutation.HEK.Guerilla
             return true;
         }
 
-        private void ReadTagBlockDefinition(int address, bool isSound)
+        private void ReadTagBlockDefinition(int address, bool isSound, TagBlockDefinition parent)
         {
             // Check if this tag_block_definition has already been read.
             if (this.TagBlockDefinitions.ContainsKey(address) == true)
@@ -107,6 +107,13 @@ namespace Mutation.HEK.Guerilla
             // Initialize the tag field set arrays.
             tagBlockDef.TagFieldSets = new tag_field_set[tagBlockDef.s_tag_block_definition.field_set_count];
             tagBlockDef.TagFields = new tag_field[tagBlockDef.s_tag_block_definition.field_set_count][];
+
+            // Check if this definition has a parent and if so add a reference to it.
+            if (parent != null)
+            {
+                // Add the parent defintion as a reference.
+                tagBlockDef.AddReference(parent);
+            }
 
             // Add the tag block definition to the dictionary.
             this.TagBlockDefinitions.Add(address, tagBlockDef);
@@ -227,12 +234,12 @@ namespace Mutation.HEK.Guerilla
                             {
                                 // Check if the definition address is valid.
                                 if (field.definition_address != 0)
-                                    ReadTagBlockDefinition(field.definition_address, false);
+                                    ReadTagBlockDefinition(field.definition_address, false, tagBlockDef);
                                 break;
                             }
                         case field_type._field_struct:
                             {
-                                ReadTagBlockDefinition(((tag_struct_definition)field).block_definition_address, false);
+                                ReadTagBlockDefinition(((tag_struct_definition)field).block_definition_address, false, tagBlockDef);
                                 break;
                             }
                     }

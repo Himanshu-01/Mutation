@@ -167,19 +167,37 @@ namespace LayoutViewer.Forms
                 return;
             }
 
+            // Build our list of definitions to process.
+            List<TagBlockDefinition> tagDefinitions = new List<TagBlockDefinition>();
+            for (int i = 0; i < reader.TagBlockDefinitions.Count; i++)
+            {
+                // Check if the number of references is greater than one.
+                if (reader.TagBlockDefinitions[i].References.Count > 1)
+                {
+                    // The definition is used in multiple places so we need to extract it into it's own file.
+                    tagDefinitions.Add(reader.TagBlockDefinitions[i]);
+                }
+            }
+
             // Create a new mutation code creator to handle the backend work for creating the class definitions.
             MutationCodeCreator codeCreator = new MutationCodeCreator();
 
-            // Loop through all the tag groups and extract each one.
-            for (int i = 0; i < reader.TagGroups.Length; i++)
+            // Loop through all the tag definitions and extract each one.
+            for (int i = 0; i < tagDefinitions.Count; i++)
             {
+                // Compute the progress percentage.
+                float percent = ((float)i / (float)tagDefinitions.Count) * 100.0f;
+
                 // Get the current tag group definition.
-                TagBlockDefinition definition = reader.TagBlockDefinitions[reader.TagGroups[i].definition_address];
-                worker.ReportProgress(0, string.Format("Converting block: {0}", definition.s_tag_block_definition.Name));
+                //TagBlockDefinition definition = reader.TagBlockDefinitions[reader.TagGroups[i].definition_address];
+                worker.ReportProgress((int)percent, string.Format("Converting block: {0}", tagDefinitions[i].s_tag_block_definition.Name));
 
                 // Process the tag block definition.
-                ProcessTagBlockDefinition(codeCreator, reader, definition, outputFolder);
+                ProcessTagBlockDefinition(codeCreator, reader, tagDefinitions[i], outputFolder);
             }
+
+            // Set the worker result value.
+            e.Result = (string)"Completed successfully!";
         }
 
         private void ProcessTagBlockDefinition(MutationCodeCreator codeCreator, GuerillaReader reader, TagBlockDefinition definition, string outputFolder)
@@ -187,7 +205,7 @@ namespace LayoutViewer.Forms
             int noNameFieldCount = 0;
 
             // Create a list to store child tag definitions we will need to process.
-            List<TagBlockDefinition> definitionQueue = new List<TagBlockDefinition>();
+            //List<TagBlockDefinition> definitionQueue = new List<TagBlockDefinition>();
 
             // Create a new tag block definition class using the code creator.
             codeCreator.CreateTagDefinitionClass(MutationCodeFormatter.FormatDefinitionName(definition.s_tag_block_definition.Name), "Mutation.Halo.TagGroups.Tags");
@@ -250,13 +268,13 @@ namespace LayoutViewer.Forms
                             // Get the definition struct from the field address.
                             TagBlockDefinition def = reader.TagBlockDefinitions[field.definition_address];
 
-                            // Check if we have already processed this tag block definition.
-                            string definitionFile = string.Format("{0}\\{1}.cs", outputFolder, def.s_tag_block_definition.Name);
-                            if (File.Exists(definitionFile) == false)
-                            {
-                                // We have not processed the definition yet, add it to the list.
-                                definitionQueue.Add(def);
-                            }
+                            //// Check if we have already processed this tag block definition.
+                            //string definitionFile = string.Format("{0}\\{1}.cs", outputFolder, def.s_tag_block_definition.Name);
+                            //if (File.Exists(definitionFile) == false)
+                            //{
+                            //    // We have not processed the definition yet, add it to the list.
+                            //    definitionQueue.Add(def);
+                            //}
                             break;
                         }
                     case field_type._field_struct:
@@ -319,17 +337,17 @@ namespace LayoutViewer.Forms
             // Write the tag block definition code to file.
             codeCreator.WriteToFile(string.Format("{0}\\{1}.cs", outputFolder, MutationCodeFormatter.FormatDefinitionName(definition.s_tag_block_definition.Name)));
 
-            // Process all of the items in the definition queue.
-            foreach (TagBlockDefinition tagDefinition in definitionQueue)
-            {
-                // Check if we have already processed this tag block definition.
-                string definitionFile = string.Format("{0}\\{1}.cs", outputFolder, tagDefinition.s_tag_block_definition.Name);
-                if (File.Exists(definitionFile) == false)
-                {
-                    // We have not processed the definition yet.
-                    ProcessTagBlockDefinition(codeCreator, reader, tagDefinition, outputFolder);
-                }
-            }
+            //// Process all of the items in the definition queue.
+            //foreach (TagBlockDefinition tagDefinition in definitionQueue)
+            //{
+            //    // Check if we have already processed this tag block definition.
+            //    string definitionFile = string.Format("{0}\\{1}.cs", outputFolder, tagDefinition.s_tag_block_definition.Name);
+            //    if (File.Exists(definitionFile) == false)
+            //    {
+            //        // We have not processed the definition yet.
+            //        ProcessTagBlockDefinition(codeCreator, reader, tagDefinition, outputFolder);
+            //    }
+            //}
         }
     }
 }

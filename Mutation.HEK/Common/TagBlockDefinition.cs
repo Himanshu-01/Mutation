@@ -29,6 +29,11 @@ namespace Mutation.HEK.Common
         /// </summary>
         public int TagFieldSetLatestIndex { get; set; }
 
+        /// <summary>
+        /// Gets a list of TagBlockDefinition's that reference this TagBlockDefinition instance.
+        /// </summary>
+        public List<TagBlockDefinition> References { get; set; }
+
         public TagBlockDefinition()
         {
             // Initialize the tag_block_definition.
@@ -38,6 +43,18 @@ namespace Mutation.HEK.Common
         public void Read(IntPtr h2LangLib, System.IO.BinaryReader reader)
         {
 
+        }
+
+        public void AddReference(TagBlockDefinition parent)
+        {
+            // Check if the referencing defintion is already in the references list.
+            if (this.References.Contains(parent) == true)
+            {
+                // This shouldn't really happen.
+            }
+
+            // Add the owner reference to the references list.
+            this.References.Add(parent);
         }
     }
 }

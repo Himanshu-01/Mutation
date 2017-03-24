@@ -296,6 +296,58 @@ namespace LayoutViewer.CodeDOM
             }
         }
 
+        public void AddTagBlock(TagBlockDefinition definition, string typeName, string name, CodeCommentStatementCollection comments = null, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
+        {
+            // Create a new code type reference to reference the tag_block data type.
+            CodeTypeReference tagBlockType = new CodeTypeReference(this.ValueTypeDictionary[field_type._field_block]);
+            tagBlockType.TypeArguments.Add(typeName);
+
+            // Create a new code member field for the tag field.
+            CodeMemberField field = new CodeMemberField(tagBlockType, name);
+            field.Attributes = MemberAttributes.Public;
+
+            // Setup a code type reference for the attribute type.
+            CodeTypeReference attType = new CodeTypeReference(typeof(TagBlockDefinitionAttribute));
+
+            // Setup a TagBlockDefinitionAttribute attribute for this tag block using the definition info.
+            tag_field_set fieldSet = definition.TagFieldSets[definition.TagFieldSetLatestIndex];
+            CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(attType, new CodeAttributeArgument[] {
+                new CodeAttributeArgument(new CodePrimitiveExpression(fieldSet.size)),
+                new CodeAttributeArgument(new CodePrimitiveExpression(fieldSet.alignment_bit != 0 ? (1 << fieldSet.alignment_bit) : 4)),
+                new CodeAttributeArgument(new CodePrimitiveExpression(definition.s_tag_block_definition.maximum_element_count))
+            });
+
+            // Add it to the attributes list.
+            field.CustomAttributes.Add(attribute);
+
+            // Add any attributes for this field.
+            if (attributeCollection != null)
+                field.CustomAttributes.AddRange(attributeCollection);
+
+            // Check if there is a comment for this field and if so add it to the comments collection.
+            if (comments != null)
+                field.Comments.AddRange(comments);
+
+            // Add the field to the class definition.
+            this.codeClass.Members.Add(field);
+
+            // Check if we should add the field to the read method.
+            if (addToRead == true)
+            {
+                // Create the binary reader invoke statement.
+                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression(name), "ReadDefinition");
+                this.readMethod.Statements.Add(invoke);
+            }
+
+            // Check if we should add the field to the write method.
+            if (addToWrite == true)
+            {
+                // Create the binary writer invoke statement.
+                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("writer"), "WriteDefinition");
+                this.writeMethod.Statements.Add(invoke);
+            }
+        }
+
         public void WriteToFile(string fileName)
         {
             // Create a new CSharpCodeProvider to generate the code for us.
