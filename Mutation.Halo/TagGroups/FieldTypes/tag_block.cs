@@ -8,17 +8,10 @@ using System.Threading.Tasks;
 
 namespace Mutation.Halo.TagGroups.FieldTypes
 {
-    public interface IBlockDefinition
-    {
-        void PreProcess();
-
-        void PostProcess();
-    }
-
 #warning tag_block not fully implemented
     [GuerillaType(field_type._field_block)]
     [GuerillaType(field_type._field_struct)]
-    public class tag_block<T> : IList<T> where T : IBlockDefinition, ICloneable
+    public class tag_block<T> : IList<T> where T : IMetaDefinition, ICloneable
     {
         /// <summary>
         /// Gets the size of the tag_block struct.

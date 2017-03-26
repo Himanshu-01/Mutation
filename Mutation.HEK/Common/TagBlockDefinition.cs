@@ -34,10 +34,19 @@ namespace Mutation.HEK.Common
         /// </summary>
         public List<TagBlockDefinition> References { get; set; }
 
+        /// <summary>
+        /// Gets a boolean indicating if this TagBlockDefinition is a tag group or not.
+        /// </summary>
+        public bool IsTagGroup { get; set; }
+
         public TagBlockDefinition()
         {
             // Initialize the tag_block_definition.
             this.s_tag_block_definition = new tag_block_definition();
+
+            // Initialize fields.
+            this.References = new List<TagBlockDefinition>();
+            this.IsTagGroup = false;
         }
 
         public void Read(IntPtr h2LangLib, System.IO.BinaryReader reader)

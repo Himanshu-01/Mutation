@@ -42,6 +42,8 @@ namespace LayoutViewer.CodeDOM
         // Reading and writing functions for the code class.
         private CodeMemberMethod readMethod;
         private CodeMemberMethod writeMethod;
+        private CodeMemberMethod preProcessMethod;
+        private CodeMemberMethod postProcessMethod;
 
         // Number of padding fields added to the class definition.
         private int paddingFieldCount;
@@ -51,12 +53,14 @@ namespace LayoutViewer.CodeDOM
         {
             "System",
             "System.IO",
+            "Mutation.Halo.TagGroups",
             "Mutation.Halo.TagGroups.Attributes",
             "Mutation.Halo.TagGroups.FieldTypes"
         };
 
         private readonly string[] mutationNamespaces = new string[]
         {
+            "Mutation.Halo.TagGroups",
             "Mutation.Halo.TagGroups.Attributes",
             "Mutation.Halo.TagGroups.FieldTypes"
         };
@@ -103,18 +107,32 @@ namespace LayoutViewer.CodeDOM
             this.readMethod.Name = "ReadDefinition";
             this.readMethod.Attributes = MemberAttributes.Public;
             this.readMethod.ReturnType = new CodeTypeReference("System.Void");
-            this.readMethod.Parameters.Add(new CodeParameterDeclarationExpression("System.IO.BinaryReader", "reader"));
+            this.readMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryReader", "reader"));
 
             // Initialize the writing method for the class.
             this.writeMethod = new CodeMemberMethod();
             this.writeMethod.Name = "WriteDefinition";
             this.writeMethod.Attributes = MemberAttributes.Public;
             this.writeMethod.ReturnType = new CodeTypeReference("System.Void");
-            this.writeMethod.Parameters.Add(new CodeParameterDeclarationExpression("System.IO.BinaryWriter", "writer"));
+            this.writeMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryWriter", "writer"));
 
-            // Add the reading and writing methods to the class definition.
+            // Initialize the preprocess method for the class.
+            this.preProcessMethod = new CodeMemberMethod();
+            this.preProcessMethod.Name = "PreProcessDefinition";
+            this.preProcessMethod.Attributes = MemberAttributes.Public;
+            this.preProcessMethod.ReturnType = new CodeTypeReference("System.Void");
+
+            // Initialize the postprocess method for the class.
+            this.postProcessMethod = new CodeMemberMethod();
+            this.postProcessMethod.Name = "PostProcessDefinition";
+            this.postProcessMethod.Attributes = MemberAttributes.Public;
+            this.postProcessMethod.ReturnType = new CodeTypeReference("System.Void");
+
+            // Add the reading/writing and pre/postprocess methods to the class definition.
             this.codeClass.Members.Add(this.readMethod);
             this.codeClass.Members.Add(this.writeMethod);
+            this.codeClass.Members.Add(this.preProcessMethod);
+            this.codeClass.Members.Add(this.postProcessMethod);
 
             // Add the class type to the namespace.
             this.codeNamespace.Types.Add(this.codeClass);
@@ -125,6 +143,61 @@ namespace LayoutViewer.CodeDOM
 
             // Reset the padding field count.
             this.paddingFieldCount = 0;
+        }
+
+        public MutationCodeCreator CreateTagBlockClass(string blockName)
+        {
+            // Create a new MutationCodeCreator instance that links to this code creator for the tag block.
+            MutationCodeCreator tagBlockCodeCreator = new MutationCodeCreator();
+
+            // Create a new code namespace for the class.
+            tagBlockCodeCreator.codeNamespace = this.codeNamespace;
+
+            // Create the class code type declaration.
+            tagBlockCodeCreator.codeClass = new CodeTypeDeclaration(blockName);
+            tagBlockCodeCreator.codeClass.IsClass = true;
+            tagBlockCodeCreator.codeClass.BaseTypes.Add(new CodeTypeReference("IMetaDefinition"));
+
+            // Initialize the reading method for the class.
+            tagBlockCodeCreator.readMethod = new CodeMemberMethod();
+            tagBlockCodeCreator.readMethod.Name = "ReadDefinition";
+            tagBlockCodeCreator.readMethod.Attributes = MemberAttributes.Public;
+            tagBlockCodeCreator.readMethod.ReturnType = new CodeTypeReference("System.Void");
+            tagBlockCodeCreator.readMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryReader", "reader"));
+
+            // Initialize the writing method for the class.
+            tagBlockCodeCreator.writeMethod = new CodeMemberMethod();
+            tagBlockCodeCreator.writeMethod.Name = "WriteDefinition";
+            tagBlockCodeCreator.writeMethod.Attributes = MemberAttributes.Public;
+            tagBlockCodeCreator.writeMethod.ReturnType = new CodeTypeReference("System.Void");
+            tagBlockCodeCreator.writeMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryWriter", "writer"));
+
+            // Initialize the preprocess method for the class.
+            tagBlockCodeCreator.preProcessMethod = new CodeMemberMethod();
+            tagBlockCodeCreator.preProcessMethod.Name = "PreProcessDefinition";
+            tagBlockCodeCreator.preProcessMethod.Attributes = MemberAttributes.Public;
+            tagBlockCodeCreator.preProcessMethod.ReturnType = new CodeTypeReference("System.Void");
+
+            // Initialize the postprocess method for the class.
+            tagBlockCodeCreator.postProcessMethod = new CodeMemberMethod();
+            tagBlockCodeCreator.postProcessMethod.Name = "PostProcessDefinition";
+            tagBlockCodeCreator.postProcessMethod.Attributes = MemberAttributes.Public;
+            tagBlockCodeCreator.postProcessMethod.ReturnType = new CodeTypeReference("System.Void");
+
+            // Add the reading/writing and pre/postprocess methods to the class definition.
+            tagBlockCodeCreator.codeClass.Members.Add(tagBlockCodeCreator.readMethod);
+            tagBlockCodeCreator.codeClass.Members.Add(tagBlockCodeCreator.writeMethod);
+            tagBlockCodeCreator.codeClass.Members.Add(tagBlockCodeCreator.preProcessMethod);
+            tagBlockCodeCreator.codeClass.Members.Add(tagBlockCodeCreator.postProcessMethod);
+
+            // Add the class type to the namespace.
+            tagBlockCodeCreator.codeNamespace.Types.Add(tagBlockCodeCreator.codeClass);
+
+            // Reset the padding field count.
+            tagBlockCodeCreator.paddingFieldCount = 0;
+
+            // Return the new code creator for the tag block.
+            return tagBlockCodeCreator;
         }
 
         public void AddField(field_type type, string name, CodeCommentStatementCollection comments = null, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
@@ -299,7 +372,7 @@ namespace LayoutViewer.CodeDOM
         public void AddTagBlock(TagBlockDefinition definition, string typeName, string name, CodeCommentStatementCollection comments = null, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
         {
             // Create a new code type reference to reference the tag_block data type.
-            CodeTypeReference tagBlockType = new CodeTypeReference(this.ValueTypeDictionary[field_type._field_block]);
+            CodeTypeReference tagBlockType = MutationCodeFormatter.CreateShortCodeTypeReference(ValueTypeDictionary[field_type._field_block], this.mutationNamespaces);
             tagBlockType.TypeArguments.Add(typeName);
 
             // Create a new code member field for the tag field.
@@ -307,14 +380,14 @@ namespace LayoutViewer.CodeDOM
             field.Attributes = MemberAttributes.Public;
 
             // Setup a code type reference for the attribute type.
-            CodeTypeReference attType = new CodeTypeReference(typeof(TagBlockDefinitionAttribute));
+            CodeTypeReference attType = MutationCodeFormatter.CreateShortCodeTypeReference(typeof(TagBlockDefinitionAttribute), this.mutationNamespaces);
 
             // Setup a TagBlockDefinitionAttribute attribute for this tag block using the definition info.
             tag_field_set fieldSet = definition.TagFieldSets[definition.TagFieldSetLatestIndex];
             CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(attType, new CodeAttributeArgument[] {
-                new CodeAttributeArgument(new CodePrimitiveExpression(fieldSet.size)),
-                new CodeAttributeArgument(new CodePrimitiveExpression(fieldSet.alignment_bit != 0 ? (1 << fieldSet.alignment_bit) : 4)),
-                new CodeAttributeArgument(new CodePrimitiveExpression(definition.s_tag_block_definition.maximum_element_count))
+                new CodeAttributeArgument("sizeOf", new CodePrimitiveExpression(fieldSet.size)),
+                new CodeAttributeArgument("alignment", new CodePrimitiveExpression(fieldSet.alignment_bit != 0 ? (1 << fieldSet.alignment_bit) : 4)),
+                new CodeAttributeArgument("maxBlockCount", new CodePrimitiveExpression(definition.s_tag_block_definition.maximum_element_count))
             });
 
             // Add it to the attributes list.
@@ -336,6 +409,7 @@ namespace LayoutViewer.CodeDOM
             {
                 // Create the binary reader invoke statement.
                 CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression(name), "ReadDefinition");
+                invoke.Parameters.Add(new CodeVariableReferenceExpression("reader"));
                 this.readMethod.Statements.Add(invoke);
             }
 
@@ -343,7 +417,8 @@ namespace LayoutViewer.CodeDOM
             if (addToWrite == true)
             {
                 // Create the binary writer invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("writer"), "WriteDefinition");
+                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression(name), "WriteDefinition");
+                invoke.Parameters.Add(new CodeVariableReferenceExpression("writer"));
                 this.writeMethod.Statements.Add(invoke);
             }
         }

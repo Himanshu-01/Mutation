@@ -74,6 +74,9 @@ namespace Mutation.HEK.Guerilla
 
                 // Read the tag block definition.
                 ReadTagBlockDefinition(this.TagGroups[i].definition_address, this.TagGroups[i].GroupTag.Equals("snd!"), null);
+
+                // Mark the tag definition as a tag group.
+                this.TagBlockDefinitions[this.TagGroups[i].definition_address].IsTagGroup = true;
             }
 
             // Close the reader.
@@ -87,7 +90,17 @@ namespace Mutation.HEK.Guerilla
         {
             // Check if this tag_block_definition has already been read.
             if (this.TagBlockDefinitions.ContainsKey(address) == true)
+            {
+                //// Check if this definition has a parent and if so add a reference to it.
+                //if (parent != null)
+                //{
+                //    // Add the parent defintion as a reference.
+                //    this.TagBlockDefinitions[address].AddReference(parent);
+                //}
+
+                // Don't process the tag block.
                 return;
+            }
 
             // Seek to the definition address.
             this.reader.BaseStream.Position = address - Guerilla.BaseAddress;
@@ -108,12 +121,12 @@ namespace Mutation.HEK.Guerilla
             tagBlockDef.TagFieldSets = new tag_field_set[tagBlockDef.s_tag_block_definition.field_set_count];
             tagBlockDef.TagFields = new tag_field[tagBlockDef.s_tag_block_definition.field_set_count][];
 
-            // Check if this definition has a parent and if so add a reference to it.
-            if (parent != null)
-            {
-                // Add the parent defintion as a reference.
-                tagBlockDef.AddReference(parent);
-            }
+            //// Check if this definition has a parent and if so add a reference to it.
+            //if (parent != null)
+            //{
+            //    // Add the parent defintion as a reference.
+            //    tagBlockDef.AddReference(parent);
+            //}
 
             // Add the tag block definition to the dictionary.
             this.TagBlockDefinitions.Add(address, tagBlockDef);
