@@ -297,8 +297,9 @@ namespace LayoutViewer.Forms
             foreach (tag_field field in definition.TagFields[definition.TagFieldSetLatestIndex])
             {
                 // Process the field name formatting it properly and removing the field comment.
-                string fieldName, fieldComment;
-                MutationCodeFormatter.ProcessFieldName(field.Name, out fieldName, out fieldComment);
+                string fieldName, units, tooltip;
+                //string fieldName = MutationCodeFormatter.CreateCodeSafeFieldName(field.Name);
+                MutationCodeFormatter.ProcessFieldName(field.Name, out fieldName, out units, out tooltip);
 
                 // Make sure the field has a name.
                 if (fieldName == string.Empty)
@@ -306,14 +307,14 @@ namespace LayoutViewer.Forms
 
                 // Check if there is a comment for this field.
                 CodeCommentStatementCollection commentCollection = null;
-                if (fieldComment != string.Empty)
-                {
-                    // Add the comment to the collection.
-                    commentCollection = new CodeCommentStatementCollection();
-                    commentCollection.Add(new CodeCommentStatement(new CodeComment("<summary>", true)));
-                    commentCollection.Add(new CodeCommentStatement(new CodeComment(fieldComment, true)));
-                    commentCollection.Add(new CodeCommentStatement(new CodeComment("</summary>", true)));
-                }
+                //if (fieldComment != string.Empty)
+                //{
+                //    // Add the comment to the collection.
+                //    commentCollection = new CodeCommentStatementCollection();
+                //    commentCollection.Add(new CodeCommentStatement(new CodeComment("<summary>", true)));
+                //    commentCollection.Add(new CodeCommentStatement(new CodeComment(fieldComment, true)));
+                //    commentCollection.Add(new CodeCommentStatement(new CodeComment("</summary>", true)));
+                //}
 
                 // Handle each field accordingly.
                 switch (field.type)
@@ -352,13 +353,13 @@ namespace LayoutViewer.Forms
                             TagBlockDefinition def = reader.TagBlockDefinitions[field.definition_address];
 
                             // Create a field for the tag block.
-                            codeCreator.AddTagBlock(def, MutationCodeFormatter.FormatDefinitionName(def.s_tag_block_definition.Name), fieldName, commentCollection);
+                            codeCreator.AddTagBlock(def, MutationCodeFormatter.CreateCodeSafeFieldName(def.s_tag_block_definition.Name), fieldName, commentCollection);
 
                             // Check the number of references on the tag block to see if we should process it or not.
                             if (nonUniqueTagBlocks.Contains(def) == false)
                             {
                                 // The tag block is only referenced from within this class, so create a new code creator for it.
-                                MutationCodeCreator childCodeCreator = codeCreator.CreateTagBlockClass(MutationCodeFormatter.FormatDefinitionName(def.s_tag_block_definition.Name));
+                                MutationCodeCreator childCodeCreator = codeCreator.CreateTagBlockClass(MutationCodeFormatter.CreateCodeSafeFieldName(def.s_tag_block_definition.Name));
 
                                 // Process the tag block.
                                 ProcessTagBlockDefinition(childCodeCreator, reader, nonUniqueTagBlocks, def);
@@ -374,13 +375,13 @@ namespace LayoutViewer.Forms
                             TagBlockDefinition def = reader.TagBlockDefinitions[tagStruct.block_definition_address];
 
                             // Create a field for the tag block.
-                            codeCreator.AddTagBlock(def, MutationCodeFormatter.FormatDefinitionName(def.s_tag_block_definition.Name), fieldName, commentCollection);
+                            codeCreator.AddTagBlock(def, MutationCodeFormatter.CreateCodeSafeFieldName(def.s_tag_block_definition.Name), fieldName, commentCollection);
 
                             // Check the number of references on the tag block to see if we should process it or not.
                             if (nonUniqueTagBlocks.Contains(def) == false)
                             {
                                 // The tag block is only referenced from within this class, so create a new code creator for it.
-                                MutationCodeCreator childCodeCreator = codeCreator.CreateTagBlockClass(MutationCodeFormatter.FormatDefinitionName(def.s_tag_block_definition.Name));
+                                MutationCodeCreator childCodeCreator = codeCreator.CreateTagBlockClass(MutationCodeFormatter.CreateCodeSafeFieldName(def.s_tag_block_definition.Name));
 
                                 // Process the tag block.
                                 ProcessTagBlockDefinition(childCodeCreator, reader, nonUniqueTagBlocks, def);

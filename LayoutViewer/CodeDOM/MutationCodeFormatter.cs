@@ -9,6 +9,13 @@ namespace LayoutViewer.CodeDOM
 {
     public static class MutationCodeFormatter
     {
+        // Constants for parsing field names.
+        private const char FieldNameUnitsSeparator = ':';
+        private const char FieldNameToolTipSeparator = '#';
+
+        // List of generally invalid characters in field names.
+        private static readonly char[] InvalidCharacters = { ' ', '(', ')', '-', '^', '.', '@', '*', '<', '>', '/', '\'', ',', '[', ']' };
+
         public static CodeTypeReference CreateShortCodeTypeReference(Type fieldType, string[] imports)
         {
             // Create a new CodeTypeReference for the field type.
@@ -62,59 +69,84 @@ namespace LayoutViewer.CodeDOM
             return newName;
         }
 
-        public static void ProcessFieldName(string fieldText, out string name, out string comment)
+        /// <summary>
+        /// Processes a Guerilla UI field name back into a code safe field name with UI markup.
+        /// </summary>
+        /// <param name="fieldText">The Guerilla field name to process.</param>
+        /// <param name="name">The code safe field name.</param>
+        /// <param name="units">The units associated with the field (UI markup data).</param>
+        /// <param name="tooltip">The tooltip associated with the field (UI markup data).</param>
+        public static void ProcessFieldName(string fieldText, out string name, out string units, out string tooltip)
         {
             // Satisfy the compiler.
             name = string.Empty;
-            comment = string.Empty;
+            units = string.Empty;
+            tooltip = string.Empty;
 
-            // Loop through the field text and process.
-            char lastChar = ' ';
-            bool doComment = false;
-            for (int i = 0; i < fieldText.Length; i++)
+            // Split the string using the markup delimiters.
+            string[] pieces = fieldText.Split(new char[] { FieldNameUnitsSeparator, FieldNameToolTipSeparator });
+
+            // Create our indcies for splicing.
+            int lastIndex = fieldText.Length;
+            int unitsIndex = fieldText.IndexOf(FieldNameUnitsSeparator);
+            int toolTipIndex = fieldText.IndexOf(FieldNameToolTipSeparator);
+
+            // Check if the tooltip string exists.
+            if (toolTipIndex != -1)
             {
-                // Check if we are doing the comment or not.
-                if (doComment == false)
-                {
-                    // Check the current character.
-                    if (char.IsLetterOrDigit(fieldText[i]) == true)
-                    {
-                        // Check if this is the first character.
-                        if (i == 0)
-                        {
-                            // Just add the character
-                            name += char.ToLower(fieldText[i]);
-                        }
-                        else
-                        {
-                            // Check the last character.
-                            if (lastChar == ' ' || lastChar == ':')
-                            {
-                                // Capitalize the character and add it to the name.
-                                name += char.ToUpper(fieldText[i]);
-                            }
-                            else
-                                name += fieldText[i];
-                        }
-                    }
-                    else if (fieldText[i] == '#')
-                    {
-                        // Switch to comment.
-                        doComment = true;
-                    }
+                // Determine which piece the tooltip string is.
+                tooltip = (toolTipIndex > unitsIndex ? pieces[pieces.Length - 1] : pieces[pieces.Length - 2]);
 
-                    // Save the current char as the last char.
-                    lastChar = fieldText[i];
-                }
-                else
-                {
-                    // Just add the character to the comment.
-                    comment += fieldText[i];
-                }
+                // Set the last index so we can continue parsing.
+                if (toolTipIndex < lastIndex)
+                    lastIndex = toolTipIndex;
             }
+
+            // Check if the units string exists.
+            if (unitsIndex != -1)
+            {
+                // Determine which piece the units string is.
+                units = (unitsIndex > toolTipIndex ? pieces[pieces.Length - 1] : pieces[pieces.Length - 2]);
+
+                // Set the last index so we can continue parsing.
+                if (unitsIndex < lastIndex)
+                    lastIndex = unitsIndex;
+            }
+
+            // Split out the field name and sanitize it.
+            name = CreateCodeSafeFieldName(fieldText.Substring(0, lastIndex));
+
+            // If the name ends with a safe character just remove it.
+            if (name.EndsWith("_") == true)
+                name = name.Remove(name.Length - 1);
         }
 
-        public static string ProcessMemberName(string memberName)
+        /// <summary>
+        /// Sanitizes the <see cref="fieldName"/> into a code safe field name.
+        /// </summary>
+        /// <param name="fieldName">The unsafe field name to be processed</param>
+        /// <returns>The code safe equivalent of <see cref="fieldName"/></returns>
+        public static string CreateCodeSafeFieldName(string fieldName)
+        {
+            string newFieldName = "";
+
+            // Loop through the entire string and check for any invalid field name characters.
+            for (int i = 0; i < fieldName.Length; i++)
+            {
+                // Process the current character and add it to the output string.
+                newFieldName += (InvalidCharacters.Contains(fieldName[i]) == true ? '_' : fieldName[i]);
+            }
+
+            // Return the newly formatted field name.
+            return newFieldName;
+        }
+
+        /// <summary>
+        /// Sanitizes <see cref="memberName"/> into a code safe enum/flag value name.
+        /// </summary>
+        /// <param name="memberName">The unsafe field name to be processed</param>
+        /// <returns>The code safe equivalent of <see cref="memberName"/></returns>
+        public static string CreateCodeSafeFlagName(string memberName)
         {
             // Create a temporary string.
             string name = "";
@@ -135,7 +167,7 @@ namespace LayoutViewer.CodeDOM
                     else
                     {
                         // Check the last character.
-                        if (lastChar == ' ' || lastChar == ':' || lastChar == '_')
+                        if (InvalidCharacters.Contains(lastChar) == true)
                         {
                             // Capitalize the character and add it to the name.
                             name += char.ToUpper(memberName[i]);
@@ -147,6 +179,13 @@ namespace LayoutViewer.CodeDOM
 
                 // Save the current char as the last char.
                 lastChar = memberName[i];
+            }
+
+            // Check if the first character of the flag name is a digit, and if so make it safe.
+            if (name.Length > 0 && char.IsDigit(name[0]) == true)
+            {
+                // Append and '_' character to the flag name.
+                name.Insert(0, "_");
             }
 
             // Return the processed name

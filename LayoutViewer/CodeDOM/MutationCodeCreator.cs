@@ -247,6 +247,10 @@ namespace LayoutViewer.CodeDOM
             // Get the proper field type for this field.
             Type fieldType = this.ValueTypeDictionary[type];
 
+            // If the field name is the same as the type name then we have to append an '@' character.
+            if (name.Equals(typeName) == true)
+                name.Insert(0, "@");
+
             // Create a new code member field for the tag field.
             CodeMemberField field = new CodeMemberField(typeName, name);
             field.Attributes = MemberAttributes.Public;
@@ -315,7 +319,9 @@ namespace LayoutViewer.CodeDOM
                 // Create a new CodeMemberField for the enum option.
                 CodeMemberField option = new CodeMemberField
                 {
-                    Name = MutationCodeFormatter.ProcessMemberName(field.options[i]),
+                    Name = MutationCodeFormatter.CreateCodeSafeFlagName(field.options[i]),
+
+                    // I really want this to be a hex value, but CodeDOM doesn't seem to be able to do this.
                     InitExpression = new CodePrimitiveExpression(isBitmask == true ? (1 << i) : i),
                 };
 
