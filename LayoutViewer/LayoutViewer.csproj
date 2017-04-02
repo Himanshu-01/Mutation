@@ -79,6 +79,7 @@
   <ItemGroup>
     <Compile Include="CodeDOM\MutationCodeCreator.cs" />
     <Compile Include="CodeDOM\MutationCodeFormatter.cs" />
+    <Compile Include="CodeDOM\ProcessedFieldType.cs" />
     <Compile Include="Forms\MainDialog.cs">
       <SubType>Form</SubType>
     </Compile>

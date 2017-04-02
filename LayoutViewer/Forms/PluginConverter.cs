@@ -167,8 +167,15 @@ namespace LayoutViewer.Forms
                 return;
             }
 
+            // Check if the subfolder for block definitions exists.
+            if (Directory.Exists(string.Format("{0}\\BlockDefinitions", outputFolder)) == false)
+            {
+                // Create the subfolder for block definitions.
+                Directory.CreateDirectory(string.Format("{0}\\BlockDefinitions", outputFolder));
+            }
+
             // Preprocess the tag block definitions by counting references to each one.
-            Dictionary<string, List<TagBlockDefinition>> referenceList = PreProcessTagBlockDefinitions(reader);
+            Dictionary <string, List<TagBlockDefinition>> referenceList = PreProcessTagBlockDefinitions(reader);
             Dictionary<string, List<TagBlockDefinition>> nonUniqueDefinitions = referenceList.Where(b => b.Value.Count > 1).ToDictionary(p => p.Key, p => p.Value);
 
             // Initialize our list of tag definitions to process with the basic tag groups.
@@ -191,11 +198,11 @@ namespace LayoutViewer.Forms
                 // Compute the progress percentage.
                 float percent = ((float)i / (float)tagDefinitions.Count) * 100.0f;
 
-                // Create a new mutation code creator to handle the backend work for creating the class definitions.
-                MutationCodeCreator codeCreator = new MutationCodeCreator();
-
                 // Get the current tag group definition.
                 worker.ReportProgress((int)percent, string.Format("Converting block: {0}", tagDefinitions[i].s_tag_block_definition.Name));
+
+                // Create a new mutation code creator to handle the backend work for creating the class definitions.
+                MutationCodeCreator codeCreator = new MutationCodeCreator();
 
                 // Create a new class for this tag block definition.
                 codeCreator.CreateTagDefinitionClass(MutationCodeFormatter.CreateCodeSafeFieldName(tagDefinitions[i].s_tag_block_definition.Name), "Mutation.Halo.TagGroups.Tags");
@@ -203,8 +210,19 @@ namespace LayoutViewer.Forms
                 // Process the tag block definition.
                 ProcessTagBlockDefinition(codeCreator, reader, tagDefinitions, tagDefinitions[i]);
 
-                // Write the tag block definition code to file.
-                codeCreator.WriteToFile(string.Format("{0}\\{1}.cs", outputFolder, MutationCodeFormatter.FormatDefinitionName(tagDefinitions[i].s_tag_block_definition.Name)));
+                // Check if the definition is a tag group or tag block and write it to the correct location.
+                if (tagDefinitions[i].IsTagGroup == true)
+                {
+                    // Write the tag group to file.
+                    codeCreator.WriteToFile(string.Format("{0}\\{1}.cs", outputFolder, 
+                        MutationCodeFormatter.CreateCodeSafeFieldName(tagDefinitions[i].s_tag_block_definition.Name)));
+                }
+                else
+                {
+                    // Write the block definition to file.
+                    codeCreator.WriteToFile(string.Format("{0}\\BlockDefinitions\\{1}.cs", outputFolder, 
+                        MutationCodeFormatter.CreateCodeSafeFieldName(tagDefinitions[i].s_tag_block_definition.Name)));
+                }
             }
 
             // Set the worker result value.

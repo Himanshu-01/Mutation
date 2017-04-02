@@ -45,6 +45,9 @@ namespace LayoutViewer.CodeDOM
         private CodeMemberMethod preProcessMethod;
         private CodeMemberMethod postProcessMethod;
 
+        // List of types that have been added to the current class.
+        private Dictionary<string, ProcessedFieldType> processedTypes = new Dictionary<string, ProcessedFieldType>();
+
         // Number of padding fields added to the class definition.
         private int paddingFieldCount;
 
@@ -85,7 +88,8 @@ namespace LayoutViewer.CodeDOM
         /// </summary>
         /// <param name="className">Name of the class definition.</param>
         /// <param name="namespaceName">Namespace the class will be created in.</param>
-        public void CreateTagDefinitionClass(string className, string namespaceName)
+        /// <param name="baseType">Name of the base type if this class inherits another type.</param>
+        public void CreateTagDefinitionClass(string className, string namespaceName, string baseType = "")
         {
             // Create a new code namespace for the class.
             this.codeNamespace = new CodeNamespace(namespaceName);
@@ -101,6 +105,13 @@ namespace LayoutViewer.CodeDOM
             this.codeClass = new CodeTypeDeclaration(className);
             this.codeClass.IsClass = true;
             this.codeClass.BaseTypes.Add(new CodeTypeReference("IMetaDefinition"));
+
+            // Check if the base type was provided.
+            if (baseType != string.Empty)
+            {
+                // Add the base type to the base types list.
+                this.codeClass.BaseTypes.Add(new CodeTypeReference(baseType));
+            }
 
             // Initialize the reading method for the class.
             this.readMethod = new CodeMemberMethod();
@@ -326,9 +337,6 @@ namespace LayoutViewer.CodeDOM
                 CodeMemberField option = new CodeMemberField
                 {
                     Name = MutationCodeFormatter.CreateCodeSafeFlagName(field.options[i]),
-
-                    // I really want this to be a hex value, but CodeDOM doesn't seem to be able to do this.
-                    //InitExpression = new CodePrimitiveExpression(isBitmask == true ? (1 << i) : i),
                     InitExpression = new CodeSnippetExpression(string.Format("0x{0}", (isBitmask == true ? (1 << i) : i).ToString("x"))),
                 };
 
