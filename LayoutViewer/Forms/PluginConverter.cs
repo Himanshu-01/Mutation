@@ -198,7 +198,7 @@ namespace LayoutViewer.Forms
                 worker.ReportProgress((int)percent, string.Format("Converting block: {0}", tagDefinitions[i].s_tag_block_definition.Name));
 
                 // Create a new class for this tag block definition.
-                codeCreator.CreateTagDefinitionClass(MutationCodeFormatter.FormatDefinitionName(tagDefinitions[i].s_tag_block_definition.Name), "Mutation.Halo.TagGroups.Tags");
+                codeCreator.CreateTagDefinitionClass(MutationCodeFormatter.CreateCodeSafeFieldName(tagDefinitions[i].s_tag_block_definition.Name), "Mutation.Halo.TagGroups.Tags");
 
                 // Process the tag block definition.
                 ProcessTagBlockDefinition(codeCreator, reader, tagDefinitions, tagDefinitions[i]);
@@ -394,7 +394,7 @@ namespace LayoutViewer.Forms
                             tag_reference_definition tagRef = (tag_reference_definition)field;
 
                             // Setup a code type reference for the attribute type.
-                            CodeTypeReference attType = new CodeTypeReference(typeof(TagReferenceAttribute).Name);
+                            CodeTypeReference attType = MutationCodeFormatter.CreateShortCodeTypeReference(typeof(TagReferenceAttribute), MutationCodeCreator.MutationNamespaces);
 
                             // Setup a TagReferenceAttribute attribute for this field with the group tag filter.
                             CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(attType,
@@ -409,7 +409,7 @@ namespace LayoutViewer.Forms
                     case field_type._field_useless_pad:
                         {
                             // Setup a code type reference for the attribute.
-                            CodeTypeReference attType = new CodeTypeReference(typeof(PaddingAttribute).Name);
+                            CodeTypeReference attType = MutationCodeFormatter.CreateShortCodeTypeReference(typeof(PaddingAttribute), MutationCodeCreator.MutationNamespaces);
 
                             // Create an expression for the padding type parameter.
                             CodeFieldReferenceExpression attPadType = new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(PaddingType).Name),

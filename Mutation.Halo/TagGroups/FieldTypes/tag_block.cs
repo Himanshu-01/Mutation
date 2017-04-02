@@ -5,13 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace Mutation.Halo.TagGroups.FieldTypes
 {
 #warning tag_block not fully implemented
     [GuerillaType(field_type._field_block)]
     [GuerillaType(field_type._field_struct)]
-    public class tag_block<T> : IList<T> where T : IMetaDefinition, ICloneable
+    public class tag_block<T> : IMetaDefinition, IList<T> where T : IMetaDefinition
     {
         /// <summary>
         /// Gets the size of the tag_block struct.
@@ -85,6 +86,26 @@ namespace Mutation.Halo.TagGroups.FieldTypes
         //    this.blocks = new T[this.count];
         //    this.definition = typeof(T);
         //}
+
+        #region IMetaDefinition
+
+        public void PreProcessDefinition()
+        {
+        }
+
+        public void PostProcessDefinition()
+        {
+        }
+
+        public void ReadDefinition(BinaryReader reader)
+        {
+        }
+
+        public void WriteDefinition(BinaryWriter writer)
+        {
+        }
+
+        #endregion
 
         #region IList Members
 
@@ -204,7 +225,7 @@ namespace Mutation.Halo.TagGroups.FieldTypes
             for (int i = arrayIndex, x = 0; i < array.Length && x < this.count; i++, x++)
             {
                 // Copy the block.
-                array[i] = (T)this.blocks[x].Clone();
+                //array[i] = (T)this.blocks[x].Clone();
             }
         }
 

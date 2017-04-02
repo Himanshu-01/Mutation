@@ -58,7 +58,7 @@ namespace LayoutViewer.CodeDOM
             "Mutation.Halo.TagGroups.FieldTypes"
         };
 
-        private readonly string[] mutationNamespaces = new string[]
+        public static readonly string[] MutationNamespaces = new string[]
         {
             "Mutation.Halo.TagGroups",
             "Mutation.Halo.TagGroups.Attributes",
@@ -206,7 +206,7 @@ namespace LayoutViewer.CodeDOM
             Type fieldType = this.ValueTypeDictionary[type];
 
             // Create a new code member field for the tag field.
-            CodeMemberField field = new CodeMemberField(MutationCodeFormatter.CreateShortCodeTypeReference(fieldType, this.mutationNamespaces), name);
+            CodeMemberField field = new CodeMemberField(MutationCodeFormatter.CreateShortCodeTypeReference(fieldType, MutationNamespaces), name);
             field.Attributes = MemberAttributes.Public;
 
             // Add any attributes for this field.
@@ -271,17 +271,23 @@ namespace LayoutViewer.CodeDOM
                 // Create the binary reader invoke statement.
                 CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("reader"), this.BinaryReaderMethods[fieldType]);
 
+                // Create the explicit cast expression to cast from the primitive type to the custom field type.
+                CodeCastExpression cast = new CodeCastExpression(typeName, invoke);
+
                 // Add the field to the read method.
-                CodeAssignStatement assign = new CodeAssignStatement(new CodeVariableReferenceExpression(name), invoke);
+                CodeAssignStatement assign = new CodeAssignStatement(new CodeVariableReferenceExpression(name), cast);
                 this.readMethod.Statements.Add(assign);
             }
 
             // Check if we should add the field to the write method.
             if (addToWrite == true)
             {
+                // Create the explicit cast expression to cast the custom field type to a primitive type.
+                CodeCastExpression cast = new CodeCastExpression(fieldType, new CodeVariableReferenceExpression(name));
+
                 // Create the binary writer invoke statement.
                 CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("writer"),
-                    this.BinaryWriterMethods[fieldType], new CodeExpression[] { new CodeVariableReferenceExpression(name) });
+                    this.BinaryWriterMethods[fieldType], new CodeExpression[] { cast });
 
                 // Add the field to the write method.
                 this.writeMethod.Statements.Add(invoke);
@@ -322,7 +328,8 @@ namespace LayoutViewer.CodeDOM
                     Name = MutationCodeFormatter.CreateCodeSafeFlagName(field.options[i]),
 
                     // I really want this to be a hex value, but CodeDOM doesn't seem to be able to do this.
-                    InitExpression = new CodePrimitiveExpression(isBitmask == true ? (1 << i) : i),
+                    //InitExpression = new CodePrimitiveExpression(isBitmask == true ? (1 << i) : i),
+                    InitExpression = new CodeSnippetExpression(string.Format("0x{0}", (isBitmask == true ? (1 << i) : i).ToString("x"))),
                 };
 
                 // Add the option to the enum.
@@ -378,7 +385,7 @@ namespace LayoutViewer.CodeDOM
         public void AddTagBlock(TagBlockDefinition definition, string typeName, string name, CodeCommentStatementCollection comments = null, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
         {
             // Create a new code type reference to reference the tag_block data type.
-            CodeTypeReference tagBlockType = MutationCodeFormatter.CreateShortCodeTypeReference(ValueTypeDictionary[field_type._field_block], this.mutationNamespaces);
+            CodeTypeReference tagBlockType = MutationCodeFormatter.CreateShortCodeTypeReference(ValueTypeDictionary[field_type._field_block], MutationNamespaces);
             tagBlockType.TypeArguments.Add(typeName);
 
             // Create a new code member field for the tag field.
@@ -386,14 +393,15 @@ namespace LayoutViewer.CodeDOM
             field.Attributes = MemberAttributes.Public;
 
             // Setup a code type reference for the attribute type.
-            CodeTypeReference attType = MutationCodeFormatter.CreateShortCodeTypeReference(typeof(TagBlockDefinitionAttribute), this.mutationNamespaces);
+            CodeTypeReference attType = MutationCodeFormatter.CreateShortCodeTypeReference(typeof(TagBlockDefinitionAttribute), MutationNamespaces);
 
             // Setup a TagBlockDefinitionAttribute attribute for this tag block using the definition info.
             tag_field_set fieldSet = definition.TagFieldSets[definition.TagFieldSetLatestIndex];
             CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(attType, new CodeAttributeArgument[] {
-                new CodeAttributeArgument("sizeOf", new CodePrimitiveExpression(fieldSet.size)),
-                new CodeAttributeArgument("alignment", new CodePrimitiveExpression(fieldSet.alignment_bit != 0 ? (1 << fieldSet.alignment_bit) : 4)),
-                new CodeAttributeArgument("maxBlockCount", new CodePrimitiveExpression(definition.s_tag_block_definition.maximum_element_count))
+                // CodeDOM doesn't seem to support named parameters so we are going to do some h4x here...
+                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("sizeOf: {0}", fieldSet.size))),
+                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("alignment: {0}", fieldSet.alignment_bit != 0 ? (1 << fieldSet.alignment_bit) : 4))),
+                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("maxBlockCount: {0}", definition.s_tag_block_definition.maximum_element_count)))
             });
 
             // Add it to the attributes list.

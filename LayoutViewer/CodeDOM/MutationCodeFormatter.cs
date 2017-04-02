@@ -185,7 +185,7 @@ namespace LayoutViewer.CodeDOM
             if (name.Length > 0 && char.IsDigit(name[0]) == true)
             {
                 // Append and '_' character to the flag name.
-                name.Insert(0, "_");
+                name = name.Insert(0, "_");
             }
 
             // Return the processed name

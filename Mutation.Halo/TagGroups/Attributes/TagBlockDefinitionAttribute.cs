@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Mutation.Halo.TagGroups.Attributes
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
     public class TagBlockDefinitionAttribute : Attribute
     {
         /// <summary>
