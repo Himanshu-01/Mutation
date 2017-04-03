@@ -63,6 +63,11 @@ namespace LayoutViewer.CodeDOM
         private int paddingFieldCount = 0;
 
         /// <summary>
+        /// Number of explanation fields in the current scope.
+        /// </summary>
+        private int explanationFieldCount = 0;
+
+        /// <summary>
         /// Creates a new MutationCodeScope using the scope information provided.
         /// </summary>
         /// <param name="@namespace">Full type name for the code scope</param>
@@ -89,8 +94,9 @@ namespace LayoutViewer.CodeDOM
         /// <param name="units">String to receive the units specifier is one is present</param>
         /// <param name="tooltip">String to receive the tooltip text if it is present</param>
         /// <param name="isPadding">True if the field is a padding field type</param>
+        /// <param name="isExplanation">True if the field is an explanation field type</param>
         /// <returns>The new code safe field name for the field</returns>
-        public string CreateCodeSafeFieldName(string fieldName, out string units, out string tooltip, bool isPadding = false)
+        public string CreateCodeSafeFieldName(string fieldName, out string units, out string tooltip, bool isPadding = false, bool isExplanation = false)
         {
             string newFieldName = "";
 
@@ -103,6 +109,11 @@ namespace LayoutViewer.CodeDOM
             {
                 // Create a new padding field name.
                 return AddPaddingField();
+            }
+            else if (isExplanation == true)
+            {
+                // Create a new explanation field name.
+                return AddExplanationField();
             }
 
             // Check if the name is invalid.

@@ -20,6 +20,11 @@ namespace Mutation.Halo.TagGroups.FieldTypes
         /// </summary>
         public string Explaination { get; private set; }
 
+        /// <summary>
+        /// Creates a new Explanation field using the info provided.
+        /// </summary>
+        /// <param name="name">Name of the explanation block.</param>
+        /// <param name="explanation">Explanation details.</param>
         public Explanation(string name = "", string explanation = "")
         {
             // Initialize fields.

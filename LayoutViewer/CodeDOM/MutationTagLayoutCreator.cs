@@ -129,7 +129,7 @@ namespace LayoutViewer.CodeDOM
                 CodeAttributeDeclarationCollection attributeCollection = new CodeAttributeDeclarationCollection();
 
                 // Create the UI markup attribute if the units or tooltip strings are valid.
-                attributeCollection.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(displayName: fieldName, unitsSpecifier: units, tooltipText: tooltip));
+                attributeCollection.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(displayName: field.Name, unitsSpecifier: units, tooltipText: tooltip));
 
                 // Handle each field accordingly.
                 switch (field.type)
@@ -258,6 +258,11 @@ namespace LayoutViewer.CodeDOM
                             blockCodeCreator.AddPaddingField(blockCodeScope, field.definition_address, attributeCollection);
                             break;
                         }
+                    case field_type._field_explanation:
+                        {
+                            break;
+                        }
+                    case field_type._field_terminator: break;
                     default:
                         {
                             // Check if the value type dictionary contains this field type.

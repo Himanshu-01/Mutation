@@ -45,9 +45,6 @@ namespace LayoutViewer.CodeDOM
         private CodeMemberMethod preProcessMethod;
         private CodeMemberMethod postProcessMethod;
 
-        // Number of padding fields added to the class definition.
-        private int paddingFieldCount = 0;
-
         // Default import directives for tag definition classes.
         private readonly string[] namespaces = new string[]
         {
@@ -330,8 +327,6 @@ namespace LayoutViewer.CodeDOM
                 string units, tooltip;
                 string optionName = codeScope.CreateCodeSafeFieldName(field.options[i], out units, out tooltip);
 
-                // TODO: UI markup attribute
-
                 // Create a new CodeMemberField for the enum option.
                 CodeMemberField option = new CodeMemberField
                 {
@@ -341,6 +336,9 @@ namespace LayoutViewer.CodeDOM
                     InitExpression = new CodeSnippetExpression(string.Format("0x{0}", 
                     (codeScope.Type == MutationCodeScopeType.Bitmask ? (1 << i) : i).ToString("x"))),
                 };
+
+                // Create a new UI markup attribute and add it to the enum option.
+                option.CustomAttributes.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(displayName: field.options[i], unitsSpecifier: units, tooltipText: tooltip));
 
                 // Add the option to the enum.
                 @enum.Members.Add(option);
