@@ -45,11 +45,8 @@ namespace LayoutViewer.CodeDOM
         private CodeMemberMethod preProcessMethod;
         private CodeMemberMethod postProcessMethod;
 
-        // List of types that have been added to the current class.
-        private Dictionary<string, ProcessedFieldType> processedTypes = new Dictionary<string, ProcessedFieldType>();
-
         // Number of padding fields added to the class definition.
-        private int paddingFieldCount;
+        private int paddingFieldCount = 0;
 
         // Default import directives for tag definition classes.
         private readonly string[] namespaces = new string[]
@@ -61,12 +58,20 @@ namespace LayoutViewer.CodeDOM
             "Mutation.Halo.TagGroups.FieldTypes"
         };
 
+        /// <summary>
+        /// Namespaces used in the Mutation tag layouts.
+        /// </summary>
         public static readonly string[] MutationNamespaces = new string[]
         {
             "Mutation.Halo.TagGroups",
             "Mutation.Halo.TagGroups.Attributes",
             "Mutation.Halo.TagGroups.FieldTypes"
         };
+
+        /// <summary>
+        /// Mutation namespace for the tag layouts.
+        /// </summary>
+        public const string MutationTagsNamespace = "Mutation.Halo.TagGroups.Tags";
 
         #endregion
 
@@ -79,20 +84,9 @@ namespace LayoutViewer.CodeDOM
 
             // Cache the binary reader and writer methods.
             CacheBinaryReaderWriterMethods();
-        }
 
-        #endregion
-
-        /// <summary>
-        /// Initialize a new CodeCompileUnit with a class definition based on the fields provided.
-        /// </summary>
-        /// <param name="className">Name of the class definition.</param>
-        /// <param name="namespaceName">Namespace the class will be created in.</param>
-        /// <param name="baseType">Name of the base type if this class inherits another type.</param>
-        public void CreateTagDefinitionClass(string className, string namespaceName, string baseType = "")
-        {
             // Create a new code namespace for the class.
-            this.codeNamespace = new CodeNamespace(namespaceName);
+            this.codeNamespace = new CodeNamespace(MutationTagsNamespace);
 
             // Add the standard set of import directives to the namespace.
             foreach (string name in this.namespaces)
@@ -101,131 +95,113 @@ namespace LayoutViewer.CodeDOM
                 this.codeNamespace.Imports.Add(new CodeNamespaceImport(name));
             }
 
+            // Initialize a new code compile unit and add this namespace to it.
+            this.codeUnit = new CodeCompileUnit();
+            this.codeUnit.Namespaces.Add(this.codeNamespace);
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Creates a new class for the tag group and returns a MutationCodeCreator who's root namespace is the new class.
+        /// </summary>
+        /// <param name="className">Name of the class definition.</param>
+        /// <param name="baseType">Name of the base type if this class inherits another type.</param>
+        /// <returns>A new MutationCodeCreator for the child namespace.</returns>
+        public MutationCodeCreator CreateTagGroupClass(string className, string baseType = "")
+        {
+            // Create a new code creator instance.
+            MutationCodeCreator codeCreator = new MutationCodeCreator();
+
             // Create the class code type declaration.
-            this.codeClass = new CodeTypeDeclaration(className);
-            this.codeClass.IsClass = true;
-            this.codeClass.BaseTypes.Add(new CodeTypeReference("IMetaDefinition"));
+            codeCreator.codeClass = new CodeTypeDeclaration(className);
+            codeCreator.codeClass.IsClass = true;
+            codeCreator.codeClass.BaseTypes.Add(new CodeTypeReference("IMetaDefinition"));
 
             // Check if the base type was provided.
             if (baseType != string.Empty)
             {
                 // Add the base type to the base types list.
-                this.codeClass.BaseTypes.Add(new CodeTypeReference(baseType));
+                codeCreator.codeClass.BaseTypes.Add(new CodeTypeReference(baseType));
             }
 
             // Initialize the reading method for the class.
-            this.readMethod = new CodeMemberMethod();
-            this.readMethod.Name = "ReadDefinition";
-            this.readMethod.Attributes = MemberAttributes.Public;
-            this.readMethod.ReturnType = new CodeTypeReference("System.Void");
-            this.readMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryReader", "reader"));
+            codeCreator.readMethod = new CodeMemberMethod();
+            codeCreator.readMethod.Name = "ReadDefinition";
+            codeCreator.readMethod.Attributes = MemberAttributes.Public;
+            codeCreator.readMethod.ReturnType = new CodeTypeReference("System.Void");
+            codeCreator.readMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryReader", "reader"));
 
             // Initialize the writing method for the class.
-            this.writeMethod = new CodeMemberMethod();
-            this.writeMethod.Name = "WriteDefinition";
-            this.writeMethod.Attributes = MemberAttributes.Public;
-            this.writeMethod.ReturnType = new CodeTypeReference("System.Void");
-            this.writeMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryWriter", "writer"));
+            codeCreator.writeMethod = new CodeMemberMethod();
+            codeCreator.writeMethod.Name = "WriteDefinition";
+            codeCreator.writeMethod.Attributes = MemberAttributes.Public;
+            codeCreator.writeMethod.ReturnType = new CodeTypeReference("System.Void");
+            codeCreator.writeMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryWriter", "writer"));
 
             // Initialize the preprocess method for the class.
-            this.preProcessMethod = new CodeMemberMethod();
-            this.preProcessMethod.Name = "PreProcessDefinition";
-            this.preProcessMethod.Attributes = MemberAttributes.Public;
-            this.preProcessMethod.ReturnType = new CodeTypeReference("System.Void");
+            codeCreator.preProcessMethod = new CodeMemberMethod();
+            codeCreator.preProcessMethod.Name = "PreProcessDefinition";
+            codeCreator.preProcessMethod.Attributes = MemberAttributes.Public;
+            codeCreator.preProcessMethod.ReturnType = new CodeTypeReference("System.Void");
 
             // Initialize the postprocess method for the class.
-            this.postProcessMethod = new CodeMemberMethod();
-            this.postProcessMethod.Name = "PostProcessDefinition";
-            this.postProcessMethod.Attributes = MemberAttributes.Public;
-            this.postProcessMethod.ReturnType = new CodeTypeReference("System.Void");
+            codeCreator.postProcessMethod = new CodeMemberMethod();
+            codeCreator.postProcessMethod.Name = "PostProcessDefinition";
+            codeCreator.postProcessMethod.Attributes = MemberAttributes.Public;
+            codeCreator.postProcessMethod.ReturnType = new CodeTypeReference("System.Void");
 
             // Add the reading/writing and pre/postprocess methods to the class definition.
-            this.codeClass.Members.Add(this.readMethod);
-            this.codeClass.Members.Add(this.writeMethod);
-            this.codeClass.Members.Add(this.preProcessMethod);
-            this.codeClass.Members.Add(this.postProcessMethod);
+            codeCreator.codeClass.Members.Add(codeCreator.readMethod);
+            codeCreator.codeClass.Members.Add(codeCreator.writeMethod);
+            codeCreator.codeClass.Members.Add(codeCreator.preProcessMethod);
+            codeCreator.codeClass.Members.Add(codeCreator.postProcessMethod);
 
-            // Add the class type to the namespace.
-            this.codeNamespace.Types.Add(this.codeClass);
+            // Add the new tag group class to our namespace.
+            this.codeNamespace.Types.Add(codeCreator.codeClass);
 
-            // Initialize a new code compile unit and add this namespace to it.
-            this.codeUnit = new CodeCompileUnit();
-            this.codeUnit.Namespaces.Add(this.codeNamespace);
-
-            // Reset the padding field count.
-            this.paddingFieldCount = 0;
+            // Return the new code creator.
+            return codeCreator;
         }
 
+        /// <summary>
+        /// Creates a new class for the tag block and returns a MutationCodeCreator who's root namespace is the new class.
+        /// </summary>
+        /// <param name="blockName">Name of the block definition.</param>
+        /// <returns>A new MutationCodeCreator for the child namespace.</returns>
         public MutationCodeCreator CreateTagBlockClass(string blockName)
         {
-            // Create a new MutationCodeCreator instance that links to this code creator for the tag block.
-            MutationCodeCreator tagBlockCodeCreator = new MutationCodeCreator();
+            // This method is here in case I decide to change the functionality of tag block definitions.
+            // For now they are created the same as a tag group.
+            MutationCodeCreator codeCreator = CreateTagGroupClass(blockName);
 
-            // Create a new code namespace for the class.
-            tagBlockCodeCreator.codeNamespace = this.codeNamespace;
-
-            // Create the class code type declaration.
-            tagBlockCodeCreator.codeClass = new CodeTypeDeclaration(blockName);
-            tagBlockCodeCreator.codeClass.IsClass = true;
-            tagBlockCodeCreator.codeClass.BaseTypes.Add(new CodeTypeReference("IMetaDefinition"));
-
-            // Initialize the reading method for the class.
-            tagBlockCodeCreator.readMethod = new CodeMemberMethod();
-            tagBlockCodeCreator.readMethod.Name = "ReadDefinition";
-            tagBlockCodeCreator.readMethod.Attributes = MemberAttributes.Public;
-            tagBlockCodeCreator.readMethod.ReturnType = new CodeTypeReference("System.Void");
-            tagBlockCodeCreator.readMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryReader", "reader"));
-
-            // Initialize the writing method for the class.
-            tagBlockCodeCreator.writeMethod = new CodeMemberMethod();
-            tagBlockCodeCreator.writeMethod.Name = "WriteDefinition";
-            tagBlockCodeCreator.writeMethod.Attributes = MemberAttributes.Public;
-            tagBlockCodeCreator.writeMethod.ReturnType = new CodeTypeReference("System.Void");
-            tagBlockCodeCreator.writeMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryWriter", "writer"));
-
-            // Initialize the preprocess method for the class.
-            tagBlockCodeCreator.preProcessMethod = new CodeMemberMethod();
-            tagBlockCodeCreator.preProcessMethod.Name = "PreProcessDefinition";
-            tagBlockCodeCreator.preProcessMethod.Attributes = MemberAttributes.Public;
-            tagBlockCodeCreator.preProcessMethod.ReturnType = new CodeTypeReference("System.Void");
-
-            // Initialize the postprocess method for the class.
-            tagBlockCodeCreator.postProcessMethod = new CodeMemberMethod();
-            tagBlockCodeCreator.postProcessMethod.Name = "PostProcessDefinition";
-            tagBlockCodeCreator.postProcessMethod.Attributes = MemberAttributes.Public;
-            tagBlockCodeCreator.postProcessMethod.ReturnType = new CodeTypeReference("System.Void");
-
-            // Add the reading/writing and pre/postprocess methods to the class definition.
-            tagBlockCodeCreator.codeClass.Members.Add(tagBlockCodeCreator.readMethod);
-            tagBlockCodeCreator.codeClass.Members.Add(tagBlockCodeCreator.writeMethod);
-            tagBlockCodeCreator.codeClass.Members.Add(tagBlockCodeCreator.preProcessMethod);
-            tagBlockCodeCreator.codeClass.Members.Add(tagBlockCodeCreator.postProcessMethod);
-
-            // Add the class type to the namespace.
-            tagBlockCodeCreator.codeNamespace.Types.Add(tagBlockCodeCreator.codeClass);
-
-            // Reset the padding field count.
-            tagBlockCodeCreator.paddingFieldCount = 0;
+            // Add a region directive to the tag block.
+            //codeCreator.codeClass.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, blockName));
 
             // Return the new code creator for the tag block.
-            return tagBlockCodeCreator;
+            return codeCreator;
         }
 
-        public void AddField(field_type type, string name, CodeCommentStatementCollection comments = null, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
+        /// <summary>
+        /// Creates a new field for the specified type and adds it to the current code object.
+        /// </summary>
+        /// <param name="fieldType">Guerilla field type of the field.</param>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
+        /// <param name="addToRead">Boolean indicating if the padding field should be added to the read method for the current structure.</param>
+        /// <param name="addToWrite">Boolean indicating if the padding field should be added to the write method for the current structure.</param>
+        public void AddField(field_type fieldType, string fieldName, 
+            CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
         {
-            // Get the proper field type for this field.
-            Type fieldType = this.ValueTypeDictionary[type];
+            // Get the underlying type for this field.
+            Type standardFieldType = this.ValueTypeDictionary[fieldType];
 
             // Create a new code member field for the tag field.
-            CodeMemberField field = new CodeMemberField(MutationCodeFormatter.CreateShortCodeTypeReference(fieldType, MutationNamespaces), name);
+            CodeMemberField field = new CodeMemberField(MutationCodeFormatter.CreateShortCodeTypeReference(standardFieldType, MutationNamespaces), fieldName);
             field.Attributes = MemberAttributes.Public;
 
             // Add any attributes for this field.
             field.CustomAttributes = attributeCollection;
-
-            // Check if there is a comment for this field and if so add it to the comments collection.
-            if (comments != null)
-                field.Comments.AddRange(comments);
 
             // Add the field to the class definition.
             this.codeClass.Members.Add(field);
@@ -234,10 +210,11 @@ namespace LayoutViewer.CodeDOM
             if (addToRead == true)
             {
                 // Create the binary reader invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("reader"), this.BinaryReaderMethods[fieldType]);
+                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("reader"), 
+                    this.BinaryReaderMethods[standardFieldType]);
 
                 // Add the field to the read method.
-                CodeAssignStatement assign = new CodeAssignStatement(new CodeVariableReferenceExpression(name), invoke);
+                CodeAssignStatement assign = new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), invoke);
                 this.readMethod.Statements.Add(assign);
             }
 
@@ -246,32 +223,42 @@ namespace LayoutViewer.CodeDOM
             {
                 // Create the binary writer invoke statement.
                 CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("writer"), 
-                    this.BinaryWriterMethods[fieldType], new CodeExpression[] { new CodeVariableReferenceExpression(name) });
+                    this.BinaryWriterMethods[standardFieldType], new CodeExpression[] 
+                    {
+                        // this.<fieldName>
+                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName)
+                    });
 
                 // Add the field to the write method.
                 this.writeMethod.Statements.Add(invoke);
             }
         }
 
-        public void AddField(field_type type, string typeName, string name, CodeCommentStatementCollection comments = null, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
+        /// <summary>
+        /// Creates a new field for a custom type and adds it to the current code object.
+        /// </summary>
+        /// <param name="fieldType">Guerilla field type of the field.</param>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="fieldTypeName">Name of the custom type.</param>
+        /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
+        /// <param name="addToRead">Boolean indicating if the padding field should be added to the read method for the current structure.</param>
+        /// <param name="addToWrite">Boolean indicating if the padding field should be added to the write method for the current structure.</param>
+        public void AddCustomTypedField(field_type fieldType, string fieldName, string fieldTypeName, 
+            CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
         {
-            // Get the proper field type for this field.
-            Type fieldType = this.ValueTypeDictionary[type];
+            // Get the underlying type for this field.
+            Type standardFieldType = this.ValueTypeDictionary[fieldType];
 
             // If the field name is the same as the type name then we have to append an '@' character.
-            if (name.Equals(typeName) == true)
-                name.Insert(0, "@");
+            if (fieldName.Equals(fieldTypeName) == true)
+                fieldName.Insert(0, "@");
 
             // Create a new code member field for the tag field.
-            CodeMemberField field = new CodeMemberField(typeName, name);
+            CodeMemberField field = new CodeMemberField(fieldTypeName, fieldName);
             field.Attributes = MemberAttributes.Public;
 
             // Add any attributes for this field.
             field.CustomAttributes = attributeCollection;
-
-            // Check if there is a comment for this field and if so add it to the comments collection.
-            if (comments != null)
-                field.Comments.AddRange(comments);
 
             // Add the field to the class definition.
             this.codeClass.Members.Add(field);
@@ -280,13 +267,16 @@ namespace LayoutViewer.CodeDOM
             if (addToRead == true)
             {
                 // Create the binary reader invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("reader"), this.BinaryReaderMethods[fieldType]);
+                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(
+                    new CodeVariableReferenceExpression("reader"), 
+                    this.BinaryReaderMethods[standardFieldType]);
 
                 // Create the explicit cast expression to cast from the primitive type to the custom field type.
-                CodeCastExpression cast = new CodeCastExpression(typeName, invoke);
+                CodeCastExpression cast = new CodeCastExpression(fieldTypeName, invoke);
 
                 // Add the field to the read method.
-                CodeAssignStatement assign = new CodeAssignStatement(new CodeVariableReferenceExpression(name), cast);
+                CodeAssignStatement assign = new CodeAssignStatement(
+                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), cast);
                 this.readMethod.Statements.Add(assign);
             }
 
@@ -294,32 +284,35 @@ namespace LayoutViewer.CodeDOM
             if (addToWrite == true)
             {
                 // Create the explicit cast expression to cast the custom field type to a primitive type.
-                CodeCastExpression cast = new CodeCastExpression(fieldType, new CodeVariableReferenceExpression(name));
+                CodeCastExpression cast = new CodeCastExpression(standardFieldType, 
+                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName));
 
                 // Create the binary writer invoke statement.
                 CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("writer"),
-                    this.BinaryWriterMethods[fieldType], new CodeExpression[] { cast });
+                    this.BinaryWriterMethods[standardFieldType], new CodeExpression[] { cast });
 
                 // Add the field to the write method.
                 this.writeMethod.Statements.Add(invoke);
             }
         }
 
-        public string AddEnum(enum_definition field, string name, bool isBitmask)
+        /// <summary>
+        /// Creates a new enum or bitmask type definition in the current code object.
+        /// </summary>
+        /// <param name="codeScope">Code scope of the enum for ensuring each flag option is unique.</param>
+        /// <param name="field">Enum definition from Guerilla.</param>
+        public void AddEnumOrBitmask(MutationCodeScope codeScope, enum_definition field)
         {
-            // Format the enum name to be a proper type.
-            string enumName = string.Format("{0}{1}", char.ToUpper(name[0]), name.Substring(1));
-
             // Determine the underlying type for the enum based on the field type.
             Type fieldType = this.ValueTypeDictionary[field.type];
 
             // Create the enum field by creating a new CodeTypeDeclaration.
-            CodeTypeDeclaration @enum = new CodeTypeDeclaration(enumName);
+            CodeTypeDeclaration @enum = new CodeTypeDeclaration(codeScope.Namespace);
             @enum.IsEnum = true;
             @enum.BaseTypes.Add(fieldType);
 
-            // Check if this field is a bitmask.
-            if (isBitmask == true)
+            // Check if this field is a bitmask and if so add the Flags attribute.
+            if (codeScope.Type == MutationCodeScopeType.Bitmask)
             {
                 // Setup a code attribute declaration object for the Flags attribute.
                 CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(new CodeTypeReference(typeof(FlagsAttribute).Name));
@@ -329,15 +322,24 @@ namespace LayoutViewer.CodeDOM
             // Loop through all of the enum options and add each one to the enum field.
             for (int i = 0; i < field.option_count; i++)
             {
-                // Check if the option name is blank.
+                // Check if the option name is valid and if not skip it.
                 if (field.options[i] == string.Empty)
                     continue;
+
+                // Create a code safe field name for the enum option.
+                string units, tooltip;
+                string optionName = codeScope.CreateCodeSafeFieldName(field.options[i], out units, out tooltip);
+
+                // TODO: UI markup attribute
 
                 // Create a new CodeMemberField for the enum option.
                 CodeMemberField option = new CodeMemberField
                 {
-                    Name = MutationCodeFormatter.CreateCodeSafeFlagName(field.options[i]),
-                    InitExpression = new CodeSnippetExpression(string.Format("0x{0}", (isBitmask == true ? (1 << i) : i).ToString("x"))),
+                    Name = optionName,
+
+                    // Set the flag value accordingly.
+                    InitExpression = new CodeSnippetExpression(string.Format("0x{0}", 
+                    (codeScope.Type == MutationCodeScopeType.Bitmask ? (1 << i) : i).ToString("x"))),
                 };
 
                 // Add the option to the enum.
@@ -346,19 +348,25 @@ namespace LayoutViewer.CodeDOM
 
             // Add the enum to the class definition.
             this.codeClass.Members.Add(@enum);
-
-            // Return the enum type name.
-            return enumName;
         }
 
-        public void AddPaddingField(int size, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
+        /// <summary>
+        /// Creates a new padding field and adds it to the current code object.
+        /// </summary>
+        /// <param name="codeScope">Code scope the padding field will be added to.</param>
+        /// <param name="paddingLength">Size of the padding field.</param>
+        /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
+        /// <param name="addToRead">Boolean indicating if the padding field should be added to the read method for the current structure.</param>
+        /// <param name="addToWrite">Boolean indicating if the padding field should be added to the write method for the current structure.</param>
+        public void AddPaddingField(MutationCodeScope codeScope, int paddingLength, 
+            CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
         {
-            // Create the field name.
-            string fieldName = string.Format("padding{0}", ++this.paddingFieldCount);
-            Type fieldType = typeof(byte[]);
+            // Create a code safe field name for the padding field.
+            string units, tooltip;
+            string fieldName = codeScope.CreateCodeSafeFieldName("", out units, out tooltip, true);
 
             // Create a new code member field for the tag field.
-            CodeMemberField field = new CodeMemberField(fieldType, fieldName);
+            CodeMemberField field = new CodeMemberField(typeof(byte[]), fieldName);
             field.Attributes = MemberAttributes.Public;
 
             // Add any attributes for this field.
@@ -371,10 +379,11 @@ namespace LayoutViewer.CodeDOM
             if (addToRead == true)
             {
                 // Create the binary reader invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("reader"), "ReadBytes", new CodePrimitiveExpression(size));
+                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(
+                    new CodeVariableReferenceExpression("reader"), "ReadBytes", new CodePrimitiveExpression(paddingLength));
 
                 // Add the field to the read method.
-                CodeAssignStatement assign = new CodeAssignStatement(new CodeVariableReferenceExpression(fieldName), invoke);
+                CodeAssignStatement assign = new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), invoke);
                 this.readMethod.Statements.Add(assign);
             }
 
@@ -383,45 +392,33 @@ namespace LayoutViewer.CodeDOM
             {
                 // Create the binary writer invoke statement.
                 CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("writer"),
-                    "Write", new CodeExpression[] { new CodeVariableReferenceExpression(fieldName) });
+                    "Write", new CodeExpression[] { new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName) });
 
                 // Add the field to the write method.
                 this.writeMethod.Statements.Add(invoke);
             }
         }
 
-        public void AddTagBlock(TagBlockDefinition definition, string typeName, string name, CodeCommentStatementCollection comments = null, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
+        /// <summary>
+        /// Creates a new tag block field and adds it to the current code object.
+        /// </summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="blockTypeName">Name of the underlying tag block definition type.</param>
+        /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
+        /// <param name="addToRead">Boolean indicating if the padding field should be added to the read method for the current structure.</param>
+        /// <param name="addToWrite">Boolean indicating if the padding field should be added to the write method for the current structure.</param>
+        public void AddTagBlockField(string fieldName, string blockTypeName, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
         {
             // Create a new code type reference to reference the tag_block data type.
             CodeTypeReference tagBlockType = MutationCodeFormatter.CreateShortCodeTypeReference(ValueTypeDictionary[field_type._field_block], MutationNamespaces);
-            tagBlockType.TypeArguments.Add(typeName);
+            tagBlockType.TypeArguments.Add(blockTypeName);
 
             // Create a new code member field for the tag field.
-            CodeMemberField field = new CodeMemberField(tagBlockType, name);
+            CodeMemberField field = new CodeMemberField(tagBlockType, fieldName);
             field.Attributes = MemberAttributes.Public;
 
-            // Setup a code type reference for the attribute type.
-            CodeTypeReference attType = MutationCodeFormatter.CreateShortCodeTypeReference(typeof(TagBlockDefinitionAttribute), MutationNamespaces);
-
-            // Setup a TagBlockDefinitionAttribute attribute for this tag block using the definition info.
-            tag_field_set fieldSet = definition.TagFieldSets[definition.TagFieldSetLatestIndex];
-            CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(attType, new CodeAttributeArgument[] {
-                // CodeDOM doesn't seem to support named parameters so we are going to do some h4x here...
-                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("sizeOf: {0}", fieldSet.size))),
-                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("alignment: {0}", fieldSet.alignment_bit != 0 ? (1 << fieldSet.alignment_bit) : 4))),
-                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("maxBlockCount: {0}", definition.s_tag_block_definition.maximum_element_count)))
-            });
-
-            // Add it to the attributes list.
-            field.CustomAttributes.Add(attribute);
-
             // Add any attributes for this field.
-            if (attributeCollection != null)
-                field.CustomAttributes.AddRange(attributeCollection);
-
-            // Check if there is a comment for this field and if so add it to the comments collection.
-            if (comments != null)
-                field.Comments.AddRange(comments);
+            field.CustomAttributes = attributeCollection;
 
             // Add the field to the class definition.
             this.codeClass.Members.Add(field);
@@ -430,7 +427,7 @@ namespace LayoutViewer.CodeDOM
             if (addToRead == true)
             {
                 // Create the binary reader invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression(name), "ReadDefinition");
+                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), "ReadDefinition");
                 invoke.Parameters.Add(new CodeVariableReferenceExpression("reader"));
                 this.readMethod.Statements.Add(invoke);
             }
@@ -439,12 +436,16 @@ namespace LayoutViewer.CodeDOM
             if (addToWrite == true)
             {
                 // Create the binary writer invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression(name), "WriteDefinition");
+                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), "WriteDefinition");
                 invoke.Parameters.Add(new CodeVariableReferenceExpression("writer"));
                 this.writeMethod.Statements.Add(invoke);
             }
         }
 
+        /// <summary>
+        /// Writes the current code scope to file.
+        /// </summary>
+        /// <param name="fileName">File name to write the code to.</param>
         public void WriteToFile(string fileName)
         {
             // Create a new CSharpCodeProvider to generate the code for us.
@@ -458,7 +459,7 @@ namespace LayoutViewer.CodeDOM
 
                 // Setup the code generation options for style preferences.
                 CodeGeneratorOptions options = new CodeGeneratorOptions();
-                options.BlankLinesBetweenMembers = true;
+                options.BlankLinesBetweenMembers = false;
                 options.BracingStyle = "C";
                 options.VerbatimOrder = false;
 
@@ -484,6 +485,7 @@ namespace LayoutViewer.CodeDOM
             this.ValueTypeDictionary.Add(field_type._field_long_integer, typeof(int));
             this.ValueTypeDictionary.Add(field_type._field_angle, typeof(float));
             this.ValueTypeDictionary.Add(field_type._field_real, typeof(float));
+            this.ValueTypeDictionary.Add(field_type._field_real_fraction, typeof(float));
             this.ValueTypeDictionary.Add(field_type._field_char_enum, typeof(byte));
             this.ValueTypeDictionary.Add(field_type._field_enum, typeof(short));
             this.ValueTypeDictionary.Add(field_type._field_long_enum, typeof(int));

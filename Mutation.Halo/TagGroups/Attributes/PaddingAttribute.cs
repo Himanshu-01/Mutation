@@ -1,5 +1,6 @@
 ﻿using Mutation.HEK.Common;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -71,6 +72,11 @@ namespace Mutation.Halo.TagGroups.Attributes
             return GetPaddingFieldSize(type.GetField(fieldName));
         }
 
+        /// <summary>
+        /// Takes a Guerilla field_type and returns the corresponding PaddingType value.
+        /// </summary>
+        /// <param name="fieldType">Guerilla field type to convert.</param>
+        /// <returns>Corresponding PaddingType value.</returns>
         public static PaddingType PaddingTypeFromFieldType(field_type fieldType)
         {
             // Return the corresponding PaddingType value for the field type.
@@ -80,6 +86,29 @@ namespace Mutation.Halo.TagGroups.Attributes
                 return PaddingType.Skip;
             else
                 return PaddingType.Useless;
+        }
+
+        /// <summary>
+        /// Creates a PaddingAttribute CodeDOM declaration.
+        /// </summary>
+        /// <param name="fieldType">Guerilla field type.</param>
+        /// <param name="length">Length of the padding field.</param>
+        /// <returns>A CodeCOM attribute delcaration.</returns>
+        public static CodeAttributeDeclaration CreateAttributeDeclaration(field_type fieldType, int length)
+        {
+            // Create an expression for the padding type parameter.
+            CodeFieldReferenceExpression attPadType = new CodeFieldReferenceExpression(
+                new CodeTypeReferenceExpression(typeof(PaddingType).Name),
+                PaddingAttribute.PaddingTypeFromFieldType(fieldType).ToString());
+
+            // Create the PaddingAttribute attribute using the parameters.
+            CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(
+                typeof(PaddingAttribute).Name, 
+                new CodeAttributeArgument(attPadType),
+                new CodeAttributeArgument(new CodePrimitiveExpression(length)));
+
+            // Return the attribute instance.
+            return attribute;
         }
     }
 }

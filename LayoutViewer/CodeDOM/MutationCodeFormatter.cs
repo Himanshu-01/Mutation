@@ -14,7 +14,7 @@ namespace LayoutViewer.CodeDOM
         private const char FieldNameToolTipSeparator = '#';
 
         // List of generally invalid characters in field names.
-        private static readonly char[] InvalidCharacters = { ' ', '(', ')', '-', '^', '.', '@', '*', '<', '>', '/', '\'', ',', '[', ']' };
+        private static readonly char[] InvalidCharacters = { ' ', '(', ')', '-', '^', '.', '@', '*', '!', '#', '$', '&', '=', '+', '<', '>', '/', '\'', ',', '[', ']' };
 
         public static CodeTypeReference CreateShortCodeTypeReference(Type fieldType, string[] imports)
         {
@@ -137,6 +137,17 @@ namespace LayoutViewer.CodeDOM
                 newFieldName += (InvalidCharacters.Contains(fieldName[i]) == true ? '_' : fieldName[i]);
             }
 
+            // Check if the new field name is valid.
+            if (newFieldName.Length == 0 || newFieldName == "_")
+                return string.Empty;
+
+            // Remove any trailing "_" characters.
+            newFieldName = newFieldName.TrimEnd(new char[] { '_' });
+
+            // Check if the first character is a digit and if so append a safe character.
+            if (newFieldName.Length > 0 && char.IsDigit(newFieldName[0]) == true)
+                newFieldName = newFieldName.Insert(0, "_");
+
             // Return the newly formatted field name.
             return newFieldName;
         }
@@ -159,12 +170,7 @@ namespace LayoutViewer.CodeDOM
                 if (char.IsLetterOrDigit(memberName[i]) == true)
                 {
                     // Check if this is the first character.
-                    if (i == 0)
-                    {
-                        // Just add the character
-                        name += char.ToUpper(memberName[i]);
-                    }
-                    else
+                    if (i > 0)
                     {
                         // Check the last character.
                         if (InvalidCharacters.Contains(lastChar) == true)
@@ -180,6 +186,9 @@ namespace LayoutViewer.CodeDOM
                 // Save the current char as the last char.
                 lastChar = memberName[i];
             }
+
+            // Remove any trailing "_" characters.
+            memberName = memberName.TrimEnd(new char[] { '_' });
 
             // Check if the first character of the flag name is a digit, and if so make it safe.
             if (name.Length > 0 && char.IsDigit(name[0]) == true)
@@ -197,6 +206,7 @@ namespace LayoutViewer.CodeDOM
             string[] invalidNames = new[] 
             { 
                 "EMPTY_STRING",
+                "EMPTY STRING",
                 "EMPTYSTRING", 
                 "", 
                 "YOUR MOM"

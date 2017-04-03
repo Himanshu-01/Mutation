@@ -18,6 +18,17 @@ namespace LayoutViewer.CodeDOM
         ///// </summary>
         //public StatusUpdateHandler StatusUpdate;
 
+        /// <summary>
+        /// The global code scope for all of the tag layouts.
+        /// </summary>
+        private MutationCodeScope globalCodeScope;
+
+        public TagLayoutGenerator()
+        {
+            // Initialize the global code scope.
+            this.globalCodeScope = new MutationCodeScope(MutationCodeCreator.MutationTagsNamespace, "", -1, MutationCodeScopeType.GlobalNamespace);
+        }
+
         public void GenerateLayouts(GuerillaReader reader, string outputFolder)
         {
             // Check if the subfolder for block definitions exists.
@@ -31,8 +42,10 @@ namespace LayoutViewer.CodeDOM
             Dictionary<string, List<TagBlockDefinition>> tagBlockReferences = PreProcessTagBlockDefinitions(reader);
             Dictionary<string, List<TagBlockDefinition>> nonUniqueDefinitions = tagBlockReferences.Where(b => b.Value.Count > 1).ToDictionary(p => p.Key, p => p.Value);
 
-            // Initialize our list of tag definitions to process with the basic tag groups.
+            // Initialize our list of tag definitions to process with the tag groups from the guerilla reader.
+            //tag_group bitm = reader.TagGroups.First(tag => tag.GroupTag.Equals("bitm"));
             List<TagBlockDefinition> tagBlockDefinitions = new List<TagBlockDefinition>(reader.TagBlockDefinitions.Values.Where(block => block.IsTagGroup == true));
+            //tagBlockDefinitions.Add(reader.TagBlockDefinitions[bitm.definition_address]);
 
             // Loop through all of the non-unique tag blocks and add them to the list of definitions to be processed.
             foreach (TagBlockDefinition definition in reader.TagBlockDefinitions.Values)
@@ -45,18 +58,29 @@ namespace LayoutViewer.CodeDOM
                 }
             }
 
-            // Loop through the list of tag block definitions and process each one.
+            // Create a list of layout creators for all of the definitions we will be processing.
+            List <MutationTagLayoutCreator> layoutCreators = new List<MutationTagLayoutCreator>();
+
+            // Loop through the list of tag block definitions and create a code scope for each one.
+            // This will build a list of types in the global namespace which we need before we start processing layouts.
             for (int i = 0; i < tagBlockDefinitions.Count; i++)
             {
-                // Check if our progress event has a valid handler.
-                //if (this.StatusUpdate != null)
-                //{
-                //    // Compute the progress percentage.
-                //    float percent = ((float)i / (float)tagBlockDefinitions.Count) * 100.0f;
+                // Create a new tag layout creator and have it create its code scope using the tag block definition.
+                MutationTagLayoutCreator layoutCreator = new MutationTagLayoutCreator(tagBlockDefinitions[i]);
+                layoutCreator.CreateCodeScope(this.globalCodeScope);
 
-                //    // Get the current tag group definition.
-                //    this.StatusUpdate(percent, string.Format("Converting block: {0}", tagBlockDefinitions[i].s_tag_block_definition.Name));
-                //}
+                // Add the layout creator to the list.
+                layoutCreators.Add(layoutCreator);
+            }
+
+            // Now that we have a type list built loop through all of the layout creators and create the actual tag layouts.
+            for (int i = 0; i < layoutCreators.Count; i++)
+            {
+                // Generate the layout.
+                layoutCreators[i].CreateTagLayout(reader, this.globalCodeScope);
+
+                // Write it to file.
+                layoutCreators[i].WriteToFile(outputFolder);
             }
         }
 

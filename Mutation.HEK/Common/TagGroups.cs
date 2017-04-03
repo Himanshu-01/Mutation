@@ -144,6 +144,7 @@ namespace Mutation.HEK.Common
 
     public struct tag_block_definition
     {
+        public int address;
         public int display_name_address;
         public int name_address;
         public int flags;
@@ -179,6 +180,7 @@ namespace Mutation.HEK.Common
         public void Read(IntPtr h2LangLib, BinaryReader reader)
         {
             // Read all the fields from the stream.
+            //this.address = (int)reader.BaseStream.Position;
             this.display_name_address = reader.ReadInt32();
             this.name_address = reader.ReadInt32();
             this.flags = reader.ReadInt32();

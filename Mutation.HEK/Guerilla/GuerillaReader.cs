@@ -107,6 +107,7 @@ namespace Mutation.HEK.Guerilla
 
             // Initialize and read the tag_block_definition struct.
             TagBlockDefinition tagBlockDef = new TagBlockDefinition();
+            tagBlockDef.s_tag_block_definition.address = address;
             tagBlockDef.s_tag_block_definition.Read(h2LangLib, reader);
 
             // Special case tags may need the field set addresses adjusted.
