@@ -9,12 +9,12 @@ namespace Mutation.Halo.TagGroups
 {
     public interface IMetaDefinition
     {
-        void PreProcessDefinition();
+        //void PreProcessDefinition();
 
-        void PostProcessDefinition();
+        //void PostProcessDefinition();
 
-        void ReadDefinition(BinaryReader reader);
+        //void ReadDefinition(BinaryReader reader);
 
-        void WriteDefinition(BinaryWriter writer);
+        //void WriteDefinition(BinaryWriter writer);
     }
 }

@@ -43,7 +43,7 @@ namespace Mutation.HEK.Common.TagFieldDefinitions
         /// <summary>
         /// Gets the name of the field.
         /// </summary>
-        public string Name { get { return this.name; } }
+        public string Name { get { return this.name; } set { this.name = value; } }
 
         public virtual void Read(IntPtr h2LangLib, BinaryReader reader)
         {
@@ -56,6 +56,12 @@ namespace Mutation.HEK.Common.TagFieldDefinitions
 
             // Read the name string.
             this.name = Guerilla.Guerilla.ReadString(h2LangLib, reader, this.name_address);
+        }
+
+        public override string ToString()
+        {
+            return string.Format("Type: {0} Name: {1} DefinitionAddress: {2} GroupTag: {3}",
+                this.type.ToString(), this.name, "0x" + this.definition_address.ToString("x"), Guerilla.Guerilla.GroupTagToString(this.group_tag));
         }
     }
 }

@@ -91,16 +91,18 @@ namespace LayoutViewer.CodeDOM
         /// Creates a new code safe field name that is unique in the current scope and adds it to the fields list for this scope.
         /// </summary>
         /// <param name="fieldName">Name of the field</param>
+        /// <param name="displayName">The UI mark up display name for the field.</param>
         /// <param name="units">String to receive the units specifier is one is present</param>
         /// <param name="tooltip">String to receive the tooltip text if it is present</param>
         /// <param name="isPadding">True if the field is a padding field type</param>
         /// <param name="isExplanation">True if the field is an explanation field type</param>
         /// <returns>The new code safe field name for the field</returns>
-        public string CreateCodeSafeFieldName(string fieldName, out string units, out string tooltip, bool isPadding = false, bool isExplanation = false)
+        public string CreateCodeSafeFieldName(string fieldName, out string displayName, out string units, out string tooltip, bool isPadding = false, bool isExplanation = false)
         {
             string newFieldName = "";
 
             // Satisfy the compiler.
+            displayName = string.Empty;
             units = string.Empty;
             tooltip = string.Empty;
 
@@ -124,7 +126,7 @@ namespace LayoutViewer.CodeDOM
             }
 
             // Convert the field name to a code safe representation.
-            MutationCodeFormatter.ProcessFieldName(fieldName, out newFieldName, out units, out tooltip);
+            MutationCodeFormatter.ProcessFieldName(fieldName, out newFieldName, out displayName, out units, out tooltip);
             if (newFieldName == "")
             {
                 // Create a new no-name field name.
@@ -209,8 +211,8 @@ namespace LayoutViewer.CodeDOM
             }
 
             // Create a code safe type name for the new type.
-            string newTypeName, units, tooltip;
-            MutationCodeFormatter.ProcessFieldName(typeName, out newTypeName, out units, out tooltip);
+            string newTypeName, displayName, units, tooltip;
+            MutationCodeFormatter.ProcessFieldName(typeName, out newTypeName, out displayName, out units, out tooltip);
             if (newTypeName == "" || MutationCodeFormatter.IsValidFieldName(newTypeName) == false)
             {
                 // For now we will create a no name type for it, and I will create a preprocessing function later on.
@@ -221,12 +223,12 @@ namespace LayoutViewer.CodeDOM
             if (scopeType == MutationCodeScopeType.Bitmask)
             {
                 // Append 'b' for bitmask.
-                newTypeName = newTypeName.Insert(0, char.IsDigit(newTypeName[0]) == true ? "b_" : "b");
+                newTypeName = newTypeName.Insert(0, char.IsUpper(newTypeName[0]) == true ? "b" : "b_");
             }
             else if (scopeType == MutationCodeScopeType.Enum)
             {
                 // Append 'e' for enum.
-                newTypeName = newTypeName.Insert(0, char.IsDigit(newTypeName[0]) == true ? "e_" : "e");
+                newTypeName = newTypeName.Insert(0, char.IsUpper(newTypeName[0]) == true ? "e" : "e_");
             }
 
             // Check if the type name is unique or if it already exists.
@@ -311,6 +313,29 @@ namespace LayoutViewer.CodeDOM
             {
                 // Create a new field name for the no name field.
                 newFieldName = string.Format("noNameField{0}", this.noNameFieldCount++);
+            }
+            while (this.Fields.Contains(newFieldName) == true);
+
+            // Add the field name to the fields list.
+            this.Fields.Add(newFieldName);
+
+            // Return the new field name.
+            return newFieldName;
+        }
+
+        /// <summary>
+        /// Creates a code safe field name for an explanation field that is unique in the current scope and adds it to the fields list.
+        /// </summary>
+        /// <returns>Name of the new explanation field.</returns>
+        private string AddExplanationField()
+        {
+            string newFieldName = "";
+
+            // This is an explanation field, just loop until we have a valid field name for it.
+            do
+            {
+                // Create a new field name for the explanation field.
+                newFieldName = string.Format("explanationField{0}", this.explanationFieldCount++);
             }
             while (this.Fields.Contains(newFieldName) == true);
 

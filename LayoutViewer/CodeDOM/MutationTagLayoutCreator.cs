@@ -115,31 +115,45 @@ namespace LayoutViewer.CodeDOM
         private void ProcessTagBlockDefinition(GuerillaReader reader, TagBlockDefinition blockDefinition, MutationCodeCreator blockCodeCreator, 
             MutationCodeScope blockCodeScope, MutationCodeScope parentScope)
         {
-            // Loop through all of the fields and process each one.
-            foreach (tag_field field in blockDefinition.TagFields[blockDefinition.TagFieldSetLatestIndex])
+            // Get the field set index that most closely resembles halo 2 xbox layout.
+            int fieldSetIndex = blockDefinition.GetFieldSetIndexClosestToH2Xbox();
+
+            // Process all of the fields in the field_set.
+            ProcessFields(blockDefinition.TagFields[fieldSetIndex], reader, blockCodeCreator, blockCodeScope, parentScope);
+        }
+
+        private void ProcessFields(List<tag_field> fields, GuerillaReader reader, MutationCodeCreator blockCodeCreator,
+            MutationCodeScope blockCodeScope, MutationCodeScope parentScope)
+        {
+            // Loop through all of the fields in the collection.
+            for (int i = 0; i < fields.Count; i++)
             {
                 // Check if this field is a padding field.
-                bool bIsPadding = (field.type == field_type._field_pad || field.type == field_type._field_skip || field.type == field_type._field_useless_pad);
+                bool bIsPadding = (fields[i].type == field_type._field_pad || fields[i].type == field_type._field_skip || fields[i].type == field_type._field_useless_pad);
 
                 // Create a new field and add it to the scope for this block.
-                string units, tooltip;
-                string fieldName = blockCodeScope.CreateCodeSafeFieldName(field.Name, out units, out tooltip, bIsPadding);
+                string displayName, units, tooltip;
+                string fieldName = blockCodeScope.CreateCodeSafeFieldName(fields[i].Name, out displayName, out units, out tooltip, bIsPadding);
 
                 // Create an attribute collection for any attributes we might add to the field.
                 CodeAttributeDeclarationCollection attributeCollection = new CodeAttributeDeclarationCollection();
 
-                // Create the UI markup attribute if the units or tooltip strings are valid.
-                attributeCollection.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(displayName: field.Name, unitsSpecifier: units, tooltipText: tooltip));
+                // Make sure at least one of the required fields for a UI markup attribute is valid.
+                if (fields[i].Name != string.Empty || units != string.Empty || tooltip != string.Empty)
+                {
+                    // Create the UI markup attribute if the units or tooltip strings are valid.
+                    attributeCollection.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(displayName: displayName, unitsSpecifier: units, tooltipText: tooltip));
+                }
 
                 // Handle each field accordingly.
-                switch (field.type)
+                switch (fields[i].type)
                 {
                     case field_type._field_char_enum:
                     case field_type._field_enum:
                     case field_type._field_long_enum:
                         {
                             // Cast the field to a enum_definition struct.
-                            enum_definition enumDefinition = (enum_definition)field;
+                            enum_definition enumDefinition = (enum_definition)fields[i];
 
                             // Check if there is an existing code scope for this enum type.
                             MutationCodeScope enumScope = blockCodeScope.FindExistingCodeScope(enumDefinition.definition_address);
@@ -153,7 +167,7 @@ namespace LayoutViewer.CodeDOM
                             }
 
                             // Add a field to the block definition for this enum type.
-                            blockCodeCreator.AddCustomTypedField(field.type, fieldName, enumScope.Namespace, attributeCollection);
+                            blockCodeCreator.AddCustomTypedField(fields[i].type, fieldName, enumScope.Namespace, attributeCollection);
                             break;
                         }
                     case field_type._field_byte_flags:
@@ -161,7 +175,7 @@ namespace LayoutViewer.CodeDOM
                     case field_type._field_long_flags:
                         {
                             // Cast the field to a enum_definition struct.
-                            enum_definition enumDefinition = (enum_definition)field;
+                            enum_definition enumDefinition = (enum_definition)fields[i];
 
                             // Check if there is an existing code scope for this bitmask type.
                             MutationCodeScope bitmaskScope = blockCodeScope.FindExistingCodeScope(enumDefinition.definition_address);
@@ -175,13 +189,13 @@ namespace LayoutViewer.CodeDOM
                             }
 
                             // Add a field to the block definition for this bitmask type.
-                            blockCodeCreator.AddCustomTypedField(field.type, fieldName, bitmaskScope.Namespace, attributeCollection);
+                            blockCodeCreator.AddCustomTypedField(fields[i].type, fieldName, bitmaskScope.Namespace, attributeCollection);
                             break;
                         }
                     case field_type._field_block:
                         {
                             // Get the definition struct from the field address.
-                            TagBlockDefinition tagBlockDefinition = reader.TagBlockDefinitions[field.definition_address];
+                            TagBlockDefinition tagBlockDefinition = reader.TagBlockDefinitions[fields[i].definition_address];
 
                             // Check if the tag block definition already exists in the parent code scope.
                             MutationCodeScope tagBlockScope = parentScope.FindExistingCodeScope(tagBlockDefinition.s_tag_block_definition.address);
@@ -208,7 +222,7 @@ namespace LayoutViewer.CodeDOM
                     case field_type._field_struct:
                         {
                             // Cast the field to a tag_struct_definition.
-                            tag_struct_definition tagStruct = (tag_struct_definition)field;
+                            tag_struct_definition tagStruct = (tag_struct_definition)fields[i];
 
                             // Get the definition struct from the field address.
                             TagBlockDefinition tagBlockDefinition = reader.TagBlockDefinitions[tagStruct.block_definition_address];
@@ -238,13 +252,13 @@ namespace LayoutViewer.CodeDOM
                     case field_type._field_tag_reference:
                         {
                             // Cast the field to a tag_reference_definition definition.
-                            tag_reference_definition tagRegDefinition = (tag_reference_definition)field;
+                            tag_reference_definition tagRegDefinition = (tag_reference_definition)fields[i];
 
                             // Build the tag reference attribute for the field.
                             attributeCollection.Add(TagReferenceAttribute.CreateAttributeDeclaration(tagRegDefinition));
 
                             // Add the field with the group tag filter attribute.
-                            blockCodeCreator.AddField(field.type, fieldName, attributeCollection);
+                            blockCodeCreator.AddField(fields[i].type, fieldName, attributeCollection);
                             break;
                         }
                     case field_type._field_pad:
@@ -252,35 +266,100 @@ namespace LayoutViewer.CodeDOM
                     case field_type._field_useless_pad:
                         {
                             // Build the padding attribute for the field.
-                            attributeCollection.Add(PaddingAttribute.CreateAttributeDeclaration(field.type, field.definition_address));
+                            attributeCollection.Add(PaddingAttribute.CreateAttributeDeclaration(fields[i].type, fields[i].definition_address));
 
-                            // Add the field with the group tag filter attribute.
-                            blockCodeCreator.AddPaddingField(blockCodeScope, field.definition_address, attributeCollection);
+                            // Add the field with the padding attribute.
+                            blockCodeCreator.AddPaddingField(blockCodeScope, fields[i].definition_address, attributeCollection);
                             break;
                         }
                     case field_type._field_explanation:
                         {
+                            // Cast the field to a explanation_definition.
+                            explaination_definition explanation = (explaination_definition)fields[i];
+
+                            // Create a field for the explanation block.
+                            blockCodeCreator.AddExplanationField(blockCodeScope, explanation.Name, explanation.Explaination);
                             break;
                         }
+                    case field_type._field_array_start:
+                        {
+                            // Build a list of fields inside of the array.
+                            List<tag_field> arrayFields = CreateArrayFieldList(fields, i);
+
+                            // Loop for the length of the array and process the fields.
+                            for (int x = 0; x < fields[i].definition_address; x++)
+                            {
+                                // Process the array fields.
+                                ProcessFields(arrayFields, reader, blockCodeCreator, blockCodeScope, parentScope);
+                            }
+
+                            // Skip the fields we just processed and the array terminator.
+                            i += arrayFields.Count + 1;
+                            break;
+                        }
+                    case field_type._field_data: break;     // I don't really know what to do about this type just yet...
+                    case field_type._field_custom: break;
                     case field_type._field_terminator: break;
                     default:
                         {
                             // Check if the value type dictionary contains this field type.
-                            if (blockCodeCreator.ValueTypeDictionary.Keys.Contains(field.type) == false)
-                                continue;
+                            if (blockCodeCreator.ValueTypeDictionary.Keys.Contains(fields[i].type) == false)
+                                break;
 
                             // Add the field to the collection.
-                            blockCodeCreator.AddField(field.type, fieldName, attributeCollection);
+                            blockCodeCreator.AddField(fields[i].type, fieldName, attributeCollection);
                             break;
                         }
                 }
             }
+        }
 
-            // Check if the current block is a tag group or not.
-            if (blockDefinition.IsTagGroup == false)
+        /// <summary>
+        /// Creates a list of fields that belong to an array_start/array_end field set. 
+        /// </summary>
+        /// <param name="fields">Fields that belong to the array.</param>
+        /// <param name="startIndex">Index of the array_start field.</param>
+        /// <returns>List of fields inside of the array.</returns>
+        private List<tag_field> CreateArrayFieldList(List<tag_field> fields, int startIndex)
+        {
+            // Create a new list to hold all of the fields in the array.
+            List<tag_field> arrayFields = new List<tag_field>();
+
+            // Loop through the fields and copy the array fields into their own list.
+            int arrayStartCounter = 0;
+            for (int i = startIndex + 1; i < fields.Count; i++)
             {
-                // Add the region end directive.
+                // Check if the current field is an array_end field and it belongs to the original array_start field.
+                if (fields[i].type == field_type._field_array_end)
+                {
+                    // Check if it belongs to the original array_start field.
+                    if (arrayStartCounter == 0)
+                    {
+                        // This is the end of the array fields list.
+                        return arrayFields;
+                    }
+                    else
+                    {
+                        // Decrement the array start counter.
+                        arrayStartCounter--;
+                    }
+                }
+                else if (fields[i].type == field_type._field_array_start)
+                {
+                    // Increment the array start counter for this child array.
+                    arrayStartCounter++;
+                }
+
+                // Check for no-name fields.
+                if (arrayFields.Count == 0 && fields[i].Name == string.Empty)
+                    fields[i].Name = fields[startIndex].Name;
+
+                // Add the field to the array fields list.
+                arrayFields.Add(fields[i]);
             }
+
+            // Return the array fields.
+            return arrayFields;
         }
     }
 }

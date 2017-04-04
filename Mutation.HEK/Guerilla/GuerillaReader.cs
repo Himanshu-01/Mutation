@@ -120,7 +120,7 @@ namespace Mutation.HEK.Guerilla
 
             // Initialize the tag field set arrays.
             tagBlockDef.TagFieldSets = new tag_field_set[tagBlockDef.s_tag_block_definition.field_set_count];
-            tagBlockDef.TagFields = new tag_field[tagBlockDef.s_tag_block_definition.field_set_count][];
+            tagBlockDef.TagFields = new List<tag_field>[tagBlockDef.s_tag_block_definition.field_set_count];
 
             //// Check if this definition has a parent and if so add a reference to it.
             //if (parent != null)
@@ -193,8 +193,8 @@ namespace Mutation.HEK.Guerilla
                 if (tagBlockDef.s_tag_block_definition.field_set_latest_address == tagBlockDef.TagFieldSets[i].fields_address)
                     tagBlockDef.TagFieldSetLatestIndex = i;
 
-                // Create a temporary list of tag_fields.
-                List<tag_field> tagFields = new List<tag_field>();
+                // Initialize the tag field list.
+                tagBlockDef.TagFields[i] = new List<tag_field>();
 
                 // Seek to the tag field set address.
                 this.reader.BaseStream.Position = tagBlockDef.TagFieldSets[i].fields_address - Guerilla.BaseAddress;
@@ -233,7 +233,7 @@ namespace Mutation.HEK.Guerilla
                     field.Read(h2LangLib, reader);
 
                     // Add the field to the list.
-                    tagFields.Add(field);
+                    tagBlockDef.TagFields[i].Add(field);
 
                     // Read any tag_block definitions.
                     switch (field.type)
@@ -262,9 +262,6 @@ namespace Mutation.HEK.Guerilla
                     this.reader.BaseStream.Position = currentAddress + 16; //sizeof(tag_field)
                 }
                 while (field.type != field_type._field_terminator);
-
-                // Add the list of tag_fields to the array.
-                tagBlockDef.TagFields[i] = tagFields.ToArray();
             }
         }
     }

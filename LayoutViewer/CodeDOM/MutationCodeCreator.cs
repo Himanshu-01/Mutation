@@ -27,12 +27,12 @@ namespace LayoutViewer.CodeDOM
         /// <summary>
         /// Gets a list of all the cached BinaryReader methods.
         /// </summary>
-        public Dictionary<Type, string> BinaryReaderMethods { get; private set; }
+        //public Dictionary<Type, string> BinaryReaderMethods { get; private set; }
 
         /// <summary>
         /// Gets a list of all the cached BinaryWriter methods.
         /// </summary>
-        public Dictionary<Type, string> BinaryWriterMethods { get; private set; }
+        //public Dictionary<Type, string> BinaryWriterMethods { get; private set; }
 
         // CodeDOM objects used to create source files.
         private CodeCompileUnit codeUnit;
@@ -40,10 +40,8 @@ namespace LayoutViewer.CodeDOM
         private CodeTypeDeclaration codeClass;
 
         // Reading and writing functions for the code class.
-        private CodeMemberMethod readMethod;
-        private CodeMemberMethod writeMethod;
-        private CodeMemberMethod preProcessMethod;
-        private CodeMemberMethod postProcessMethod;
+        //private CodeMemberMethod preProcessMethod;
+        //private CodeMemberMethod postProcessMethod;
 
         // Default import directives for tag definition classes.
         private readonly string[] namespaces = new string[]
@@ -80,7 +78,7 @@ namespace LayoutViewer.CodeDOM
             BuildValueTypeDictionary();
 
             // Cache the binary reader and writer methods.
-            CacheBinaryReaderWriterMethods();
+            //CacheBinaryReaderWriterMethods();
 
             // Create a new code namespace for the class.
             this.codeNamespace = new CodeNamespace(MutationTagsNamespace);
@@ -122,37 +120,21 @@ namespace LayoutViewer.CodeDOM
                 codeCreator.codeClass.BaseTypes.Add(new CodeTypeReference(baseType));
             }
 
-            // Initialize the reading method for the class.
-            codeCreator.readMethod = new CodeMemberMethod();
-            codeCreator.readMethod.Name = "ReadDefinition";
-            codeCreator.readMethod.Attributes = MemberAttributes.Public;
-            codeCreator.readMethod.ReturnType = new CodeTypeReference("System.Void");
-            codeCreator.readMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryReader", "reader"));
+            //// Initialize the preprocess method for the class.
+            //codeCreator.preProcessMethod = new CodeMemberMethod();
+            //codeCreator.preProcessMethod.Name = "PreProcessDefinition";
+            //codeCreator.preProcessMethod.Attributes = MemberAttributes.Public;
+            //codeCreator.preProcessMethod.ReturnType = new CodeTypeReference("System.Void");
 
-            // Initialize the writing method for the class.
-            codeCreator.writeMethod = new CodeMemberMethod();
-            codeCreator.writeMethod.Name = "WriteDefinition";
-            codeCreator.writeMethod.Attributes = MemberAttributes.Public;
-            codeCreator.writeMethod.ReturnType = new CodeTypeReference("System.Void");
-            codeCreator.writeMethod.Parameters.Add(new CodeParameterDeclarationExpression("BinaryWriter", "writer"));
+            //// Initialize the postprocess method for the class.
+            //codeCreator.postProcessMethod = new CodeMemberMethod();
+            //codeCreator.postProcessMethod.Name = "PostProcessDefinition";
+            //codeCreator.postProcessMethod.Attributes = MemberAttributes.Public;
+            //codeCreator.postProcessMethod.ReturnType = new CodeTypeReference("System.Void");
 
-            // Initialize the preprocess method for the class.
-            codeCreator.preProcessMethod = new CodeMemberMethod();
-            codeCreator.preProcessMethod.Name = "PreProcessDefinition";
-            codeCreator.preProcessMethod.Attributes = MemberAttributes.Public;
-            codeCreator.preProcessMethod.ReturnType = new CodeTypeReference("System.Void");
-
-            // Initialize the postprocess method for the class.
-            codeCreator.postProcessMethod = new CodeMemberMethod();
-            codeCreator.postProcessMethod.Name = "PostProcessDefinition";
-            codeCreator.postProcessMethod.Attributes = MemberAttributes.Public;
-            codeCreator.postProcessMethod.ReturnType = new CodeTypeReference("System.Void");
-
-            // Add the reading/writing and pre/postprocess methods to the class definition.
-            codeCreator.codeClass.Members.Add(codeCreator.readMethod);
-            codeCreator.codeClass.Members.Add(codeCreator.writeMethod);
-            codeCreator.codeClass.Members.Add(codeCreator.preProcessMethod);
-            codeCreator.codeClass.Members.Add(codeCreator.postProcessMethod);
+            //// Add the reading/writing and pre/postprocess methods to the class definition.
+            //codeCreator.codeClass.Members.Add(codeCreator.preProcessMethod);
+            //codeCreator.codeClass.Members.Add(codeCreator.postProcessMethod);
 
             // Add the new tag group class to our namespace.
             this.codeNamespace.Types.Add(codeCreator.codeClass);
@@ -185,10 +167,7 @@ namespace LayoutViewer.CodeDOM
         /// <param name="fieldType">Guerilla field type of the field.</param>
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
-        /// <param name="addToRead">Boolean indicating if the padding field should be added to the read method for the current structure.</param>
-        /// <param name="addToWrite">Boolean indicating if the padding field should be added to the write method for the current structure.</param>
-        public void AddField(field_type fieldType, string fieldName, 
-            CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
+        public void AddField(field_type fieldType, string fieldName, CodeAttributeDeclarationCollection attributeCollection = null)
         {
             // Get the underlying type for this field.
             Type standardFieldType = this.ValueTypeDictionary[fieldType];
@@ -202,33 +181,6 @@ namespace LayoutViewer.CodeDOM
 
             // Add the field to the class definition.
             this.codeClass.Members.Add(field);
-
-            // Check if we should add the field to the read method.
-            if (addToRead == true)
-            {
-                // Create the binary reader invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("reader"), 
-                    this.BinaryReaderMethods[standardFieldType]);
-
-                // Add the field to the read method.
-                CodeAssignStatement assign = new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), invoke);
-                this.readMethod.Statements.Add(assign);
-            }
-
-            // Check if we should add the field to the write method.
-            if (addToWrite == true)
-            {
-                // Create the binary writer invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("writer"), 
-                    this.BinaryWriterMethods[standardFieldType], new CodeExpression[] 
-                    {
-                        // this.<fieldName>
-                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName)
-                    });
-
-                // Add the field to the write method.
-                this.writeMethod.Statements.Add(invoke);
-            }
         }
 
         /// <summary>
@@ -238,10 +190,7 @@ namespace LayoutViewer.CodeDOM
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="fieldTypeName">Name of the custom type.</param>
         /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
-        /// <param name="addToRead">Boolean indicating if the padding field should be added to the read method for the current structure.</param>
-        /// <param name="addToWrite">Boolean indicating if the padding field should be added to the write method for the current structure.</param>
-        public void AddCustomTypedField(field_type fieldType, string fieldName, string fieldTypeName, 
-            CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
+        public void AddCustomTypedField(field_type fieldType, string fieldName, string fieldTypeName, CodeAttributeDeclarationCollection attributeCollection = null)
         {
             // Get the underlying type for this field.
             Type standardFieldType = this.ValueTypeDictionary[fieldType];
@@ -259,38 +208,6 @@ namespace LayoutViewer.CodeDOM
 
             // Add the field to the class definition.
             this.codeClass.Members.Add(field);
-
-            // Check if we should add the field to the read method.
-            if (addToRead == true)
-            {
-                // Create the binary reader invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(
-                    new CodeVariableReferenceExpression("reader"), 
-                    this.BinaryReaderMethods[standardFieldType]);
-
-                // Create the explicit cast expression to cast from the primitive type to the custom field type.
-                CodeCastExpression cast = new CodeCastExpression(fieldTypeName, invoke);
-
-                // Add the field to the read method.
-                CodeAssignStatement assign = new CodeAssignStatement(
-                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), cast);
-                this.readMethod.Statements.Add(assign);
-            }
-
-            // Check if we should add the field to the write method.
-            if (addToWrite == true)
-            {
-                // Create the explicit cast expression to cast the custom field type to a primitive type.
-                CodeCastExpression cast = new CodeCastExpression(standardFieldType, 
-                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName));
-
-                // Create the binary writer invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("writer"),
-                    this.BinaryWriterMethods[standardFieldType], new CodeExpression[] { cast });
-
-                // Add the field to the write method.
-                this.writeMethod.Statements.Add(invoke);
-            }
         }
 
         /// <summary>
@@ -324,8 +241,8 @@ namespace LayoutViewer.CodeDOM
                     continue;
 
                 // Create a code safe field name for the enum option.
-                string units, tooltip;
-                string optionName = codeScope.CreateCodeSafeFieldName(field.options[i], out units, out tooltip);
+                string displayName, units, tooltip;
+                string optionName = codeScope.CreateCodeSafeFieldName(field.options[i], out displayName, out units, out tooltip);
 
                 // Create a new CodeMemberField for the enum option.
                 CodeMemberField option = new CodeMemberField
@@ -338,7 +255,7 @@ namespace LayoutViewer.CodeDOM
                 };
 
                 // Create a new UI markup attribute and add it to the enum option.
-                option.CustomAttributes.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(displayName: field.options[i], unitsSpecifier: units, tooltipText: tooltip));
+                option.CustomAttributes.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(displayName: displayName, unitsSpecifier: units, tooltipText: tooltip));
 
                 // Add the option to the enum.
                 @enum.Members.Add(option);
@@ -354,14 +271,11 @@ namespace LayoutViewer.CodeDOM
         /// <param name="codeScope">Code scope the padding field will be added to.</param>
         /// <param name="paddingLength">Size of the padding field.</param>
         /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
-        /// <param name="addToRead">Boolean indicating if the padding field should be added to the read method for the current structure.</param>
-        /// <param name="addToWrite">Boolean indicating if the padding field should be added to the write method for the current structure.</param>
-        public void AddPaddingField(MutationCodeScope codeScope, int paddingLength, 
-            CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
+        public void AddPaddingField(MutationCodeScope codeScope, int paddingLength, CodeAttributeDeclarationCollection attributeCollection = null)
         {
             // Create a code safe field name for the padding field.
-            string units, tooltip;
-            string fieldName = codeScope.CreateCodeSafeFieldName("", out units, out tooltip, true);
+            string displayName, units, tooltip;
+            string fieldName = codeScope.CreateCodeSafeFieldName("", out displayName, out units, out tooltip, isPadding: true);
 
             // Create a new code member field for the tag field.
             CodeMemberField field = new CodeMemberField(typeof(byte[]), fieldName);
@@ -372,29 +286,53 @@ namespace LayoutViewer.CodeDOM
 
             // Add the field to the class definition.
             this.codeClass.Members.Add(field);
+        }
 
-            // Check if we should add the field to the read method.
-            if (addToRead == true)
+        /// <summary>
+        /// Creates a new Explanation field using the information provided.
+        /// </summary>
+        /// <param name="codeScope">Code scope the explanation field will be added to.</param>
+        /// <param name="blockName">Name of the explanation block.</param>
+        /// <param name="explanation">Explanation for the block.</param>
+        /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
+        public void AddExplanationField(MutationCodeScope codeScope, string blockName = "", string explanation = "", CodeAttributeDeclarationCollection attributeCollection = null)
+        {
+            // Create a new field name for the explanation field.
+            string displayName, units, tooltip;
+            string fieldName = codeScope.CreateCodeSafeFieldName(blockName, out displayName, out units, out tooltip, isExplanation: true);
+
+            // Get the underlying type for this field.
+            Type standardFieldType = this.ValueTypeDictionary[field_type._field_explanation];
+
+            // Create a new code member field for the explanation block.
+            CodeMemberField field = new CodeMemberField(MutationCodeFormatter.CreateShortCodeTypeReference(standardFieldType, MutationNamespaces), fieldName);
+            field.Attributes = MemberAttributes.Public;
+
+            // Create a list of parameters to give to the explanation constructor.
+            List<CodeExpression> initializers = new List<CodeExpression>();
+
+            // Check if the block name is present.
+            if (blockName != string.Empty)
             {
-                // Create the binary reader invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(
-                    new CodeVariableReferenceExpression("reader"), "ReadBytes", new CodePrimitiveExpression(paddingLength));
-
-                // Add the field to the read method.
-                CodeAssignStatement assign = new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), invoke);
-                this.readMethod.Statements.Add(assign);
+                // Create a code expression for the block name initializer.
+                initializers.Add(new CodeSnippetExpression(string.Format("name: \"{0}\"", blockName)));
             }
 
-            // Check if we should add the field to the write method.
-            if (addToWrite == true)
+            // Check if the explanation is present.
+            if (MutationCodeFormatter.IsValidFieldName(explanation) == true)
             {
-                // Create the binary writer invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("writer"),
-                    "Write", new CodeExpression[] { new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName) });
-
-                // Add the field to the write method.
-                this.writeMethod.Statements.Add(invoke);
+                // Create a code expression for the explanation initializer.
+                initializers.Add(new CodeSnippetExpression(string.Format("explanation: {0}", MutationCodeFormatter.CreateCodeSafeStringLiteral(explanation))));
             }
+
+            // Create the init expression which will call the constructor of the Explanation object.
+            field.InitExpression = new CodeObjectCreateExpression(MutationCodeFormatter.CreateShortCodeTypeReference(standardFieldType, MutationNamespaces), initializers.ToArray());
+
+            // Add any attributes for this field.
+            field.CustomAttributes = attributeCollection;
+
+            // Add the field to the class definition.
+            this.codeClass.Members.Add(field);
         }
 
         /// <summary>
@@ -403,9 +341,7 @@ namespace LayoutViewer.CodeDOM
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="blockTypeName">Name of the underlying tag block definition type.</param>
         /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
-        /// <param name="addToRead">Boolean indicating if the padding field should be added to the read method for the current structure.</param>
-        /// <param name="addToWrite">Boolean indicating if the padding field should be added to the write method for the current structure.</param>
-        public void AddTagBlockField(string fieldName, string blockTypeName, CodeAttributeDeclarationCollection attributeCollection = null, bool addToRead = true, bool addToWrite = true)
+        public void AddTagBlockField(string fieldName, string blockTypeName, CodeAttributeDeclarationCollection attributeCollection = null)
         {
             // Create a new code type reference to reference the tag_block data type.
             CodeTypeReference tagBlockType = MutationCodeFormatter.CreateShortCodeTypeReference(ValueTypeDictionary[field_type._field_block], MutationNamespaces);
@@ -420,24 +356,6 @@ namespace LayoutViewer.CodeDOM
 
             // Add the field to the class definition.
             this.codeClass.Members.Add(field);
-
-            // Check if we should add the field to the read method.
-            if (addToRead == true)
-            {
-                // Create the binary reader invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), "ReadDefinition");
-                invoke.Parameters.Add(new CodeVariableReferenceExpression("reader"));
-                this.readMethod.Statements.Add(invoke);
-            }
-
-            // Check if we should add the field to the write method.
-            if (addToWrite == true)
-            {
-                // Create the binary writer invoke statement.
-                CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), "WriteDefinition");
-                invoke.Parameters.Add(new CodeVariableReferenceExpression("writer"));
-                this.writeMethod.Statements.Add(invoke);
-            }
         }
 
         /// <summary>
@@ -457,7 +375,7 @@ namespace LayoutViewer.CodeDOM
 
                 // Setup the code generation options for style preferences.
                 CodeGeneratorOptions options = new CodeGeneratorOptions();
-                options.BlankLinesBetweenMembers = false;
+                options.BlankLinesBetweenMembers = true;
                 options.BracingStyle = "C";
                 options.VerbatimOrder = false;
 
@@ -521,103 +439,103 @@ namespace LayoutViewer.CodeDOM
             }
         }
 
-        private void CacheBinaryReaderWriterMethods()
-        {
-            // Initialize the method cache lists.
-            this.BinaryReaderMethods = new Dictionary<Type, string>();
-            this.BinaryWriterMethods = new Dictionary<Type, string>();
+        //private void CacheBinaryReaderWriterMethods()
+        //{
+        //    // Initialize the method cache lists.
+        //    this.BinaryReaderMethods = new Dictionary<Type, string>();
+        //    this.BinaryWriterMethods = new Dictionary<Type, string>();
 
-            // Build the list of all binary reader methods we are interested in.
-            List<MethodInfo> readerMethods = FindAllReadMethods();
+        //    // Build the list of all binary reader methods we are interested in.
+        //    List<MethodInfo> readerMethods = FindAllReadMethods();
 
-            // Add all the binary reader methods to the cache list.
-            foreach (var method in readerMethods)
-                this.BinaryReaderMethods.Add(method.ReturnType, method.Name);
+        //    // Add all the binary reader methods to the cache list.
+        //    foreach (var method in readerMethods)
+        //        this.BinaryReaderMethods.Add(method.ReturnType, method.Name);
 
-            // Build the list of all binary writer methods we are interested in.
-            List<MethodInfo> writerMethods = FindAllWriteMethods();
+        //    // Build the list of all binary writer methods we are interested in.
+        //    List<MethodInfo> writerMethods = FindAllWriteMethods();
 
-            // Add all of the binary writer methods to the cache list.
-            foreach (var method in writerMethods)
-                this.BinaryWriterMethods.Add(method.GetParameters().Count() > 1 ? method.GetParameters()[1].ParameterType : method.GetParameters()[0].ParameterType, method.Name);
-        }
+        //    // Add all of the binary writer methods to the cache list.
+        //    foreach (var method in writerMethods)
+        //        this.BinaryWriterMethods.Add(method.GetParameters().Count() > 1 ? method.GetParameters()[1].ParameterType : method.GetParameters()[0].ParameterType, method.Name);
+        //}
 
-        private List<MethodInfo> FindAllReadMethods()
-        {
-            // Generate a list of types from the Mutation.Halo assembly.
-            Type[] assemblyTypes = Assembly.GetAssembly(typeof(GuerillaTypeAttribute)).GetTypes();
+        //private List<MethodInfo> FindAllReadMethods()
+        //{
+        //    // Generate a list of types from the Mutation.Halo assembly.
+        //    Type[] assemblyTypes = Assembly.GetAssembly(typeof(GuerillaTypeAttribute)).GetTypes();
 
-            // Build a list of binary reader extension methods by searching the Mutation.Halo namespace.
-            List<MethodInfo> extensionMethods = (from type in assemblyTypes
-                                    where type.IsSealed && !type.IsGenericType && !type.IsNested
-                                    from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                                    where method.IsDefined(typeof(ExtensionAttribute), false)
-                                    where method.GetParameters()[0].ParameterType == typeof(BinaryReader)
-                                    select method).ToList();
+        //    // Build a list of binary reader extension methods by searching the Mutation.Halo namespace.
+        //    List<MethodInfo> extensionMethods = (from type in assemblyTypes
+        //                            where type.IsSealed && !type.IsGenericType && !type.IsNested
+        //                            from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+        //                            where method.IsDefined(typeof(ExtensionAttribute), false)
+        //                            where method.GetParameters()[0].ParameterType == typeof(BinaryReader)
+        //                            select method).ToList();
 
-            // Trim the list down to only one method per return type.
-            extensionMethods = (from method in extensionMethods
-                                group method by method.ReturnType
-                                    into g
-                                    select g.First()).ToList();
+        //    // Trim the list down to only one method per return type.
+        //    extensionMethods = (from method in extensionMethods
+        //                        group method by method.ReturnType
+        //                            into g
+        //                            select g.First()).ToList();
 
-            // Build a list of native binary reader methods.
-            List<MethodInfo> methods = (from method in typeof(BinaryReader).GetMethods()
-                           where method.ReturnType != typeof(void)
-                           select method).Where(x =>
-                               {
-                                   // Verify the name of the method contains the return type.
-                                   string returnType = x.ReturnType.ToString().Split('.').Last();
-                                   return x.Name.Contains(returnType);
-                               }).ToList();
+        //    // Build a list of native binary reader methods.
+        //    List<MethodInfo> methods = (from method in typeof(BinaryReader).GetMethods()
+        //                   where method.ReturnType != typeof(void)
+        //                   select method).Where(x =>
+        //                       {
+        //                           // Verify the name of the method contains the return type.
+        //                           string returnType = x.ReturnType.ToString().Split('.').Last();
+        //                           return x.Name.Contains(returnType);
+        //                       }).ToList();
 
-            // Trim the list down to one method per return type.
-            methods = (from method in methods
-                       group method by method.ReturnType
-                           into g
-                           select g.First()).ToList();
+        //    // Trim the list down to one method per return type.
+        //    methods = (from method in methods
+        //               group method by method.ReturnType
+        //                   into g
+        //                   select g.First()).ToList();
 
-            // Combine the two lists and return the final collection.
-            return (List<MethodInfo>)methods.Union(extensionMethods).ToList();
-        }
+        //    // Combine the two lists and return the final collection.
+        //    return (List<MethodInfo>)methods.Union(extensionMethods).ToList();
+        //}
 
-        private List<MethodInfo> FindAllWriteMethods()
-        {
-            // Generate a list of types from the Mutation.Halo assembly.
-            Type[] assemblyTypes = Assembly.GetAssembly(typeof(GuerillaTypeAttribute)).GetTypes();
+        //private List<MethodInfo> FindAllWriteMethods()
+        //{
+        //    // Generate a list of types from the Mutation.Halo assembly.
+        //    Type[] assemblyTypes = Assembly.GetAssembly(typeof(GuerillaTypeAttribute)).GetTypes();
 
-            // Build a list of binary writer extension methods by searching the Mutation.Halo namespace.
-            List<MethodInfo> extensionMethods = (from type in assemblyTypes
-                                                 where type.IsSealed && !type.IsGenericType && !type.IsNested
-                                                 from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                                                 where method.IsDefined(typeof(ExtensionAttribute), false)
-                                                 where method.ReturnType == typeof(void)
-                                                 where method.Name == "Write"
-                                                 where method.GetParameters().Count() > 1 && method.GetParameters()[0].ParameterType == typeof(BinaryWriter)
-                                                 select method).ToList();
+        //    // Build a list of binary writer extension methods by searching the Mutation.Halo namespace.
+        //    List<MethodInfo> extensionMethods = (from type in assemblyTypes
+        //                                         where type.IsSealed && !type.IsGenericType && !type.IsNested
+        //                                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+        //                                         where method.IsDefined(typeof(ExtensionAttribute), false)
+        //                                         where method.ReturnType == typeof(void)
+        //                                         where method.Name == "Write"
+        //                                         where method.GetParameters().Count() > 1 && method.GetParameters()[0].ParameterType == typeof(BinaryWriter)
+        //                                         select method).ToList();
 
-            // Trim the list down to only one method per parameter type.
-            extensionMethods = (from method in extensionMethods
-                                group method by method.GetParameters()[1].ParameterType
-                                    into g
-                                    select g.First()).ToList();
+        //    // Trim the list down to only one method per parameter type.
+        //    extensionMethods = (from method in extensionMethods
+        //                        group method by method.GetParameters()[1].ParameterType
+        //                            into g
+        //                            select g.First()).ToList();
 
-            // Build a list of native binary writer methods.
-            List<MethodInfo> methods = (from method in typeof(BinaryWriter).GetMethods()
-                                        where method.ReturnType == typeof(void)
-                                        where method.Name == "Write"
-                                        where method.GetParameters().Count() > 0
-                                        select method).ToList();
+        //    // Build a list of native binary writer methods.
+        //    List<MethodInfo> methods = (from method in typeof(BinaryWriter).GetMethods()
+        //                                where method.ReturnType == typeof(void)
+        //                                where method.Name == "Write"
+        //                                where method.GetParameters().Count() > 0
+        //                                select method).ToList();
 
-            // Trim the list down to one method per parameter type.
-            methods = (from method in methods
-                       group method by method.GetParameters()[0].ParameterType
-                           into g
-                           select g.First()).ToList();
+        //    // Trim the list down to one method per parameter type.
+        //    methods = (from method in methods
+        //               group method by method.GetParameters()[0].ParameterType
+        //                   into g
+        //                   select g.First()).ToList();
 
-            // Combine the two lists and return the final collection.
-            return (List<MethodInfo>)methods.Union(extensionMethods).ToList();
-        }
+        //    // Combine the two lists and return the final collection.
+        //    return (List<MethodInfo>)methods.Union(extensionMethods).ToList();
+        //}
 
         #endregion
     }

@@ -85,21 +85,21 @@ namespace Mutation.Halo.TagGroups.Attributes
             if (displayName != string.Empty)
             {
                 // Add an argument for the display name.
-                attribute.Arguments.Add(new CodeAttributeArgument(new CodeSnippetExpression(string.Format("displayName: \"{0}\"", displayName))));
+                attribute.Arguments.Add(new CodeAttributeArgument(new CodeSnippetExpression(string.Format("displayName: {0}", displayName))));
             }
 
             // Check if the units specifier is present.
             if (unitsSpecifier != string.Empty)
             {
                 // Add an argument for the units specifier.
-                attribute.Arguments.Add(new CodeAttributeArgument(new CodeSnippetExpression(string.Format("unitsSpecifier: \"{0}\"", unitsSpecifier))));
+                attribute.Arguments.Add(new CodeAttributeArgument(new CodeSnippetExpression(string.Format("unitsSpecifier: {0}", unitsSpecifier))));
             }
 
             // Check if the tooltip text is present.
             if (tooltipText != string.Empty)
             {
                 // Add an argument for the tooltip text.
-                attribute.Arguments.Add(new CodeAttributeArgument(new CodeSnippetExpression(string.Format("tooltipText: \"{0}\"", tooltipText))));
+                attribute.Arguments.Add(new CodeAttributeArgument(new CodeSnippetExpression(string.Format("tooltipText: {0}", tooltipText))));
             }
 
             // Return the new attribute declaration.

@@ -1,10 +1,12 @@
-﻿using Mutation.HEK.Common;
+﻿using LayoutViewer.Guerilla.Attributes;
+using Mutation.HEK.Common;
 using Mutation.HEK.Common.TagFieldDefinitions;
 using Mutation.HEK.Guerilla;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,10 +25,24 @@ namespace LayoutViewer.CodeDOM
         /// </summary>
         private MutationCodeScope globalCodeScope;
 
+        /// <summary>
+        /// List of functions to pre-process tag block definitions.
+        /// </summary>
+        private Dictionary<string, MethodInfo> preProcessingFunctions;
+
+        /// <summary>
+        /// List of functions to post-process tag block definitions.
+        /// </summary>
+        private Dictionary<string, MethodInfo> postProcessingFunctions;
+
         public TagLayoutGenerator()
         {
             // Initialize the global code scope.
             this.globalCodeScope = new MutationCodeScope(MutationCodeCreator.MutationTagsNamespace, "", -1, MutationCodeScopeType.GlobalNamespace);
+
+            // Cache all of the pre/post processing functions.
+            CachePreProcessingFunctions();
+            CachePostProcessingFunctions();
         }
 
         public void GenerateLayouts(GuerillaReader reader, string outputFolder)
@@ -43,9 +59,9 @@ namespace LayoutViewer.CodeDOM
             Dictionary<string, List<TagBlockDefinition>> nonUniqueDefinitions = tagBlockReferences.Where(b => b.Value.Count > 1).ToDictionary(p => p.Key, p => p.Value);
 
             // Initialize our list of tag definitions to process with the tag groups from the guerilla reader.
-            //tag_group bitm = reader.TagGroups.First(tag => tag.GroupTag.Equals("bitm"));
+            //tag_group hlmt = reader.TagGroups.First(tag => tag.GroupTag.Equals("hlmt"));
             List<TagBlockDefinition> tagBlockDefinitions = new List<TagBlockDefinition>(reader.TagBlockDefinitions.Values.Where(block => block.IsTagGroup == true));
-            //tagBlockDefinitions.Add(reader.TagBlockDefinitions[bitm.definition_address]);
+            //tagBlockDefinitions.Add(reader.TagBlockDefinitions[hlmt.definition_address]);
 
             // Loop through all of the non-unique tag blocks and add them to the list of definitions to be processed.
             foreach (TagBlockDefinition definition in reader.TagBlockDefinitions.Values)
@@ -56,6 +72,17 @@ namespace LayoutViewer.CodeDOM
                     // Add the definition to the list to be extracted.
                     tagBlockDefinitions.Add(definition);
                 }
+            }
+
+            // Pre-process any tag layouts that need fixups.
+            for (int i = 0; i < this.preProcessingFunctions.Count; i++)
+            {
+                // Find the tag block definition this preprocessing function is associated with.
+                TagBlockDefinition tagBlock = reader.TagBlockDefinitions.Single(
+                    block => block.Value.s_tag_block_definition.Name.Equals(this.preProcessingFunctions.ElementAt(i).Key) == true).Value;
+
+                // Invoke the preprocessing method.
+                this.preProcessingFunctions.ElementAt(i).Value.Invoke(null, new object[] { tagBlock });
             }
 
             // Create a list of layout creators for all of the definitions we will be processing.
@@ -160,6 +187,68 @@ namespace LayoutViewer.CodeDOM
                             }
                             break;
                         }
+                }
+            }
+        }
+
+        #endregion
+
+        #region Caching Functions
+
+        /// <summary>
+        /// Caches a list of all methods in the assembly that have a GuerillaPreProcessAttribute associated with them.
+        /// </summary>
+        private void CachePreProcessingFunctions()
+        {
+            // Initialize the preprocessing function dictionary.
+            this.preProcessingFunctions = new Dictionary<string, MethodInfo>();
+
+            // Get a list of types that have the present in the current assembly.
+            Type[] types = Assembly.GetExecutingAssembly().GetTypes();
+            for (int i = 0; i < types.Length; i++)
+            {
+                // Get a list of methods for the current type that contain the GuerillaPreProcessAttribute attribute.
+                MethodInfo[] methods = (from method in types[i].GetMethods(BindingFlags.Public | BindingFlags.Static)
+                                        where method.IsDefined(typeof(GuerillaPreProcessAttribute)) == true
+                                        select method).ToArray();
+
+                // If there are any methods with the attribute present, add them to the preprocessing function list.
+                if (methods.Length > 0)
+                {
+                    // Get the block name the method is associated with.
+                    GuerillaPreProcessAttribute attribute = (GuerillaPreProcessAttribute)methods[0].GetCustomAttribute(typeof(GuerillaPreProcessAttribute));
+
+                    // Add the method to the preprocessing function list.
+                    this.preProcessingFunctions.Add(attribute.BlockName, methods[0]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Caches a list of all methods in the assembly that have a GuerillaPostProcessAttribute associated with them.
+        /// </summary>
+        private void CachePostProcessingFunctions()
+        {
+            // Initialize the post processing function dictionary.
+            this.postProcessingFunctions = new Dictionary<string, MethodInfo>();
+
+            // Get a list of types that have the present in the current assembly.
+            Type[] types = Assembly.GetExecutingAssembly().GetTypes();
+            for (int i = 0; i < types.Length; i++)
+            {
+                // Get a list of methods for the current type that contain the GuerillaPostProcessAttribute attribute.
+                MethodInfo[] methods = (from method in types[i].GetMethods(BindingFlags.Public | BindingFlags.Static)
+                                        where method.IsDefined(typeof(GuerillaPostProcessAttribute)) == true
+                                        select method).ToArray();
+
+                // If there are any methods with the attribute present, add them to the postprocessing function list.
+                if (methods.Length > 0)
+                {
+                    // Get the block name the method is associated with.
+                    GuerillaPostProcessAttribute attribute = (GuerillaPostProcessAttribute)methods[0].GetCustomAttribute(typeof(GuerillaPostProcessAttribute));
+
+                    // Add the method to the postprocessing function list.
+                    this.postProcessingFunctions.Add(attribute.BlockName, methods[0]);
                 }
             }
         }

@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace LayoutViewer.Guerilla.Attributes
 {
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class GuerillaPreProcessAttribute : Attribute
     {
         /// <summary>
         /// Gets the name of the block definition that the associated method will preprocess.
         /// </summary>
-        public string BlockName { get; set; }
+        public string BlockName { get; private set; }
 
         /// <summary>
         /// Tags the method associated with this attribute as the preprocess method for the block definition <see cref="blockName"/>.

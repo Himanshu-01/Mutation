@@ -169,7 +169,7 @@ namespace Mutation.HEK.Common
         /// <summary>
         /// Gets the name of the tag_block_definition.
         /// </summary>
-        public string Name { get { return this.name; } }
+        public string Name { get { return this.name; } set { this.name = value; } }
 
         private string maximum_element_count_str;
         /// <summary>
@@ -269,8 +269,4 @@ namespace Mutation.HEK.Common
     }
 
     #endregion
-
-    public class TagGroups
-    {
-    }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.CodeDom;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -73,13 +75,15 @@ namespace LayoutViewer.CodeDOM
         /// Processes a Guerilla UI field name back into a code safe field name with UI markup.
         /// </summary>
         /// <param name="fieldText">The Guerilla field name to process.</param>
-        /// <param name="name">The code safe field name.</param>
+        /// <param name="fieldName">The code safe field name.</param>
+        /// <param name="displayName">The UI mark up display name for the field.</param>
         /// <param name="units">The units associated with the field (UI markup data).</param>
         /// <param name="tooltip">The tooltip associated with the field (UI markup data).</param>
-        public static void ProcessFieldName(string fieldText, out string name, out string units, out string tooltip)
+        public static void ProcessFieldName(string fieldText, out string fieldName, out string displayName, out string units, out string tooltip)
         {
             // Satisfy the compiler.
-            name = string.Empty;
+            fieldName = string.Empty;
+            displayName = string.Empty;
             units = string.Empty;
             tooltip = string.Empty;
 
@@ -95,7 +99,7 @@ namespace LayoutViewer.CodeDOM
             if (toolTipIndex != -1)
             {
                 // Determine which piece the tooltip string is.
-                tooltip = (toolTipIndex > unitsIndex ? pieces[pieces.Length - 1] : pieces[pieces.Length - 2]);
+                tooltip = CreateCodeSafeStringLiteral(toolTipIndex > unitsIndex ? pieces[pieces.Length - 1] : pieces[pieces.Length - 2]);
 
                 // Set the last index so we can continue parsing.
                 if (toolTipIndex < lastIndex)
@@ -106,7 +110,7 @@ namespace LayoutViewer.CodeDOM
             if (unitsIndex != -1)
             {
                 // Determine which piece the units string is.
-                units = (unitsIndex > toolTipIndex ? pieces[pieces.Length - 1] : pieces[pieces.Length - 2]);
+                units = CreateCodeSafeStringLiteral(unitsIndex > toolTipIndex ? pieces[pieces.Length - 1] : pieces[pieces.Length - 2]);
 
                 // Set the last index so we can continue parsing.
                 if (unitsIndex < lastIndex)
@@ -114,11 +118,12 @@ namespace LayoutViewer.CodeDOM
             }
 
             // Split out the field name and sanitize it.
-            name = CreateCodeSafeFieldName(fieldText.Substring(0, lastIndex));
+            displayName = CreateCodeSafeStringLiteral(pieces[0]);
+            fieldName = CreateCodeSafeFieldName(pieces[0]);
 
             // If the name ends with a safe character just remove it.
-            if (name.EndsWith("_") == true)
-                name = name.Remove(name.Length - 1);
+            if (fieldName.EndsWith("_") == true)
+                fieldName = fieldName.Remove(fieldName.Length - 1);
         }
 
         /// <summary>
@@ -199,6 +204,25 @@ namespace LayoutViewer.CodeDOM
 
             // Return the processed name
             return name;
+        }
+
+        /// <summary>
+        /// Sanatizes <see cref="literal"/> into a code safe string literal.
+        /// </summary>
+        /// <param name="literal">The unsafe string literal to sanatize.</param>
+        /// <returns>The code safe equivalent of <see cref="literal"/></returns>
+        /// <see cref="http://stackoverflow.com/questions/323640/can-i-convert-a-c-sharp-string-value-to-an-escaped-string-literal"/>
+        public static string CreateCodeSafeStringLiteral(string literal)
+        {
+            using (var writer = new StringWriter())
+            {
+                using (var provider = CodeDomProvider.CreateProvider("CSharp"))
+                {
+                    // Let CodeDOM do the sanatizing, it will handle everything we need to do.
+                    provider.GenerateCodeFromExpression(new CodePrimitiveExpression(literal), writer, null);
+                    return writer.ToString();
+                }
+            }
         }
 
         public static bool IsValidFieldName(string value)
