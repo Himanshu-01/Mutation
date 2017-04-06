@@ -69,7 +69,7 @@ namespace Mutation.HEK.Common
         public int GetFieldSetIndexClosestToH2Xbox()
         {
             // Check the name of the block and return the field_set index that most closely represents the layout for h2 xbox.
-            int LatestFieldSet = 0;
+            int LatestFieldSet = this.TagFieldSetLatestIndex;
             switch (this.s_tag_block_definition.Name)
             {
                 case "materials_block":
@@ -94,14 +94,6 @@ namespace Mutation.HEK.Common
                     break;
                 case "animation_pool_block":
                     LatestFieldSet = 4;
-                    break;
-                default:
-                    //reader.BaseStream.Seek(field_set_latest_address, SeekOrigin.Begin);
-                    //var latestFieldSet = new tag_field_set(reader,
-                    //    Guerilla.PostprocessFunctions.Where(x => x.Key == definitionName)
-                    //        .Select(x => x.Value)
-                    //        .FirstOrDefault());
-                    //LatestFieldSet = latestFieldSet;
                     break;
             }
 

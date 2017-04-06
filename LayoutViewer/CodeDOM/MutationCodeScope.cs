@@ -12,6 +12,7 @@ namespace LayoutViewer.CodeDOM
         GlobalNamespace,
         TagGroup,
         TagBlock,
+        Struct,
         Enum,
         Bitmask
     }

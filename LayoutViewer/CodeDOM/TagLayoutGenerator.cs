@@ -111,7 +111,7 @@ namespace LayoutViewer.CodeDOM
                 {
                     // Invoke the post processing function.
                     this.postProcessingFunctions[layoutCreators[i].TagBlockDefinition.s_tag_block_definition.Name].Invoke(null,
-                        new object[] { } );
+                        new object[] { layoutCreators[i] } );
                 }
 
                 // Write it to file.

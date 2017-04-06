@@ -25,6 +25,14 @@ namespace Mutation.Halo.TagGroups.Attributes
         /// Hides the field from the editor.
         /// </summary>
         Hidden = 0x2,
+        /// <summary>
+        /// This field should only be displayed in the advanced view.
+        /// </summary>
+        Advanced = 0x4,
+        /// <summary>
+        /// This field should be used for the name of the each block in a tag_block field.
+        /// </summary>
+        BlockName = 0x8,
     }
 
     /// <summary>
@@ -69,6 +77,14 @@ namespace Mutation.Halo.TagGroups.Attributes
             this.ToolTipText = tooltipText;
         }
 
+        /// <summary>
+        /// Creates a EditorMarkupAttribute CodeDOM declaration.
+        /// </summary>
+        /// <param name="flags">Markup flags.</param>
+        /// <param name="displayName">Editor display name.</param>
+        /// <param name="unitsSpecifier">Units specifier.</param>
+        /// <param name="tooltipText">Tooltip text.</param>
+        /// <returns>A CodeDOM attribute declaration.</returns>
         public static CodeAttributeDeclaration CreateAttributeDeclaration(EditorMarkUpFlags flags = EditorMarkUpFlags.None, string displayName = "", string unitsSpecifier = "", string tooltipText = "")
         {
             // Create the attribute declaration and initialize it with no parameters.

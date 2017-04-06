@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mutation.Halo.TagGroups.Attributes;
+using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
@@ -11,9 +12,26 @@ namespace LayoutViewer.CodeDOM
 {
     public static class MutationCodeFormatter
     {
-        // Constants for parsing field names.
-        private const char FieldNameUnitsSeparator = ':';
-        private const char FieldNameToolTipSeparator = '#';
+        /// <summary>
+        /// Denotes the start of the units specifier string.
+        /// </summary>
+        public const char FieldNameUnitsCharacter = ':';
+        /// <summary>
+        /// Denotes the start of the tooltip text string.
+        /// </summary>
+        public const char FieldNameToolTipCharacter = '#';
+        /// <summary>
+        /// Declares the field as read-only.
+        /// </summary>
+        public const char FieldNameReadOnlyCharacter = '*';
+        /// <summary>
+        /// Declares the field an advanced field, and will only be displayed in the advanced view.
+        /// </summary>
+        public const char FieldNameAdvancedCharacter = '!';
+        /// <summary>
+        /// Declares the field the naming field for blocks in a tag_block field.
+        /// </summary>
+        public const char FieldNameBlockNameCharacter = '^';
 
         // List of generally invalid characters in field names.
         private static readonly char[] InvalidCharacters = { ' ', '(', ')', '-', '^', '.', '@', '*', '!', '#', '$', '&', '=', '+', '<', '>', '/', '\'', ',', '[', ']' };
@@ -88,12 +106,12 @@ namespace LayoutViewer.CodeDOM
             tooltip = string.Empty;
 
             // Split the string using the markup delimiters.
-            string[] pieces = fieldText.Split(new char[] { FieldNameUnitsSeparator, FieldNameToolTipSeparator });
+            string[] pieces = fieldText.Split(new char[] { FieldNameUnitsCharacter, FieldNameToolTipCharacter });
 
             // Create our indcies for splicing.
             int lastIndex = fieldText.Length;
-            int unitsIndex = fieldText.IndexOf(FieldNameUnitsSeparator);
-            int toolTipIndex = fieldText.IndexOf(FieldNameToolTipSeparator);
+            int unitsIndex = fieldText.IndexOf(FieldNameUnitsCharacter);
+            int toolTipIndex = fieldText.IndexOf(FieldNameToolTipCharacter);
 
             // Check if the tooltip string exists.
             if (toolTipIndex != -1)
@@ -225,6 +243,33 @@ namespace LayoutViewer.CodeDOM
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fieldName"></param>
+        /// <returns></returns>
+        public static EditorMarkUpFlags MarkupFlagsFromFieldName(string fieldName)
+        {
+            EditorMarkUpFlags flags = EditorMarkUpFlags.None;
+
+            // Check the field name for the read-only character.
+            flags |= (fieldName.Contains(FieldNameReadOnlyCharacter) == true ? EditorMarkUpFlags.ReadOnly : EditorMarkUpFlags.None);
+
+            // Check the field name for the advanced view character.
+            flags |= (fieldName.Contains(FieldNameAdvancedCharacter) == true ? EditorMarkUpFlags.Advanced : EditorMarkUpFlags.None);
+
+            // Check the field name for the block naming character.
+            flags |= (fieldName.Contains(FieldNameBlockNameCharacter) == true ? EditorMarkUpFlags.BlockName : EditorMarkUpFlags.None);
+
+            // Return the markup flags.
+            return flags;
+        }
+
+        /// <summary>
+        /// Determines if <see cref="value"/> is a valid Guerilla field name.
+        /// </summary>
+        /// <param name="value">String to check.</param>
+        /// <returns>True if <see cref="value"/> is a valid Guerilla field name.</returns>
         public static bool IsValidFieldName(string value)
         {
             string[] invalidNames = new[] 

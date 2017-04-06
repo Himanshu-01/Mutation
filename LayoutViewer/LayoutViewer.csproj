@@ -97,7 +97,6 @@
     <Compile Include="Guerilla\Attributes\GuerillaPostProcessAttribute.cs" />
     <Compile Include="Guerilla\Attributes\GuerillaPreProcessAttribute.cs" />
     <Compile Include="Guerilla\Tags\bitmap_block.cs" />
-    <Compile Include="Guerilla\Tags\BlockDefinitions\global_geometry_block_info_struct_block.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Forms\MainDialog.resx">
@@ -154,7 +153,9 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Guerilla\Tags\BlockDefinitions\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

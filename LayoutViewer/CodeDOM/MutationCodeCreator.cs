@@ -19,14 +19,40 @@ namespace LayoutViewer.CodeDOM
     {
         #region Fields
 
+        // Internal instance of the value type dictionary.
+        private static Dictionary<field_type, Type> valueTypeDictionary = null;
         /// <summary>
         /// Dictionary containing all Guerilla field_type's and their corresponding .Net object type.
         /// </summary>
-        public Dictionary<field_type, Type> ValueTypeDictionary { get; private set; }
+        public static Dictionary<field_type, Type> ValueTypeDictionary
+        {
+            get
+            {
+                // Check if the value type dictionary has been initialized.
+                if (valueTypeDictionary == null)
+                {
+                    // Initialize and build the dictionary.
+                    valueTypeDictionary = new Dictionary<field_type, Type>();
+                    BuildValueTypeDictionary();
+                }
+
+                // Return it.
+                return valueTypeDictionary;
+            }
+            private set
+            {
+                // Set the value.
+                valueTypeDictionary = value;
+            }
+        }
 
         // CodeDOM objects used to create source files.
         private CodeCompileUnit codeUnit;
-        private CodeNamespace codeNamespace;
+
+        /// <summary>
+        /// Gets the CodeDOM object for this namespace.
+        /// </summary>
+        public CodeNamespace CodeNamespace { get; set; }
 
         /// <summary>
         /// Gets the CodeDOM class object for this class.
@@ -58,7 +84,10 @@ namespace LayoutViewer.CodeDOM
         /// </summary>
         public const string MutationTagsNamespace = "Mutation.Halo.TagGroups.Tags";
 
-        private static readonly string TagBlockDefinitionBaseType = "TagBlockDefinition";
+        /// <summary>
+        /// Name of the base object type for tag block definitions.
+        /// </summary>
+        private const string TagBlockDefinitionBaseType = "TagBlockDefinition";
 
         #endregion
 
@@ -73,18 +102,18 @@ namespace LayoutViewer.CodeDOM
             //CacheBinaryReaderWriterMethods();
 
             // Create a new code namespace for the class.
-            this.codeNamespace = new CodeNamespace(MutationTagsNamespace);
+            this.CodeNamespace = new CodeNamespace(MutationTagsNamespace);
 
             // Add the standard set of import directives to the namespace.
             foreach (string name in DefaultNamespaces)
             {
                 // Add the import to the namespace.
-                this.codeNamespace.Imports.Add(new CodeNamespaceImport(name));
+                this.CodeNamespace.Imports.Add(new CodeNamespaceImport(name));
             }
 
             // Initialize a new code compile unit and add this namespace to it.
             this.codeUnit = new CodeCompileUnit();
-            this.codeUnit.Namespaces.Add(this.codeNamespace);
+            this.codeUnit.Namespaces.Add(this.CodeNamespace);
         }
 
         #endregion
@@ -93,9 +122,10 @@ namespace LayoutViewer.CodeDOM
         /// Creates a new class for the tag group and returns a MutationCodeCreator who's root namespace is the new class.
         /// </summary>
         /// <param name="className">Name of the class definition.</param>
+        /// <param name="blockAttribute">Tag block definition attribute for the block.</param>
         /// <param name="baseType">Name of the base type if this class inherits another type.</param>
         /// <returns>A new MutationCodeCreator for the child namespace.</returns>
-        public MutationCodeCreator CreateTagGroupClass(string className, string baseType = "")
+        public MutationCodeCreator CreateTagGroupClass(string className, CodeAttributeDeclaration blockAttribute, string baseType = TagBlockDefinitionBaseType)
         {
             // Create a new code creator instance.
             MutationCodeCreator codeCreator = new MutationCodeCreator();
@@ -103,33 +133,13 @@ namespace LayoutViewer.CodeDOM
             // Create the class code type declaration.
             codeCreator.CodeClass = new CodeTypeDeclaration(className);
             codeCreator.CodeClass.IsClass = true;
-            codeCreator.CodeClass.BaseTypes.Add(new CodeTypeReference("IMetaDefinition"));
+            codeCreator.CodeClass.BaseTypes.Add(new CodeTypeReference(baseType));
 
-            // Check if the base type was provided.
-            if (baseType != string.Empty)
-            {
-                // Add the base type to the base types list.
-                codeCreator.CodeClass.BaseTypes.Add(new CodeTypeReference(baseType));
-            }
-
-            //// Initialize the preprocess method for the class.
-            //codeCreator.preProcessMethod = new CodeMemberMethod();
-            //codeCreator.preProcessMethod.Name = "PreProcessDefinition";
-            //codeCreator.preProcessMethod.Attributes = MemberAttributes.Public;
-            //codeCreator.preProcessMethod.ReturnType = new CodeTypeReference("System.Void");
-
-            //// Initialize the postprocess method for the class.
-            //codeCreator.postProcessMethod = new CodeMemberMethod();
-            //codeCreator.postProcessMethod.Name = "PostProcessDefinition";
-            //codeCreator.postProcessMethod.Attributes = MemberAttributes.Public;
-            //codeCreator.postProcessMethod.ReturnType = new CodeTypeReference("System.Void");
-
-            //// Add the reading/writing and pre/postprocess methods to the class definition.
-            //codeCreator.codeClass.Members.Add(codeCreator.preProcessMethod);
-            //codeCreator.codeClass.Members.Add(codeCreator.postProcessMethod);
+            // Add the block attribute to the class declaration.
+            codeCreator.CodeClass.CustomAttributes.Add(blockAttribute);
 
             // Add the new tag group class to our namespace.
-            this.codeNamespace.Types.Add(codeCreator.CodeClass);
+            this.CodeNamespace.Types.Add(codeCreator.CodeClass);
 
             // Return the new code creator.
             return codeCreator;
@@ -139,12 +149,13 @@ namespace LayoutViewer.CodeDOM
         /// Creates a new class for the tag block and returns a MutationCodeCreator who's root namespace is the new class.
         /// </summary>
         /// <param name="blockName">Name of the block definition.</param>
+        /// <param name="blockAttribute">Tag block definition attribute for the block.</param>
         /// <returns>A new MutationCodeCreator for the child namespace.</returns>
-        public MutationCodeCreator CreateTagBlockClass(string blockName)
+        public MutationCodeCreator CreateTagBlockClass(string blockName, CodeAttributeDeclaration attribute)
         {
             // This method is here in case I decide to change the functionality of tag block definitions.
             // For now they are created the same as a tag group.
-            MutationCodeCreator codeCreator = CreateTagGroupClass(blockName);
+            MutationCodeCreator codeCreator = CreateTagGroupClass(blockName, attribute);
 
             // Add a region directive to the tag block.
             codeCreator.CodeClass.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, blockName));
@@ -163,7 +174,7 @@ namespace LayoutViewer.CodeDOM
         public void AddField(field_type fieldType, string fieldName, CodeAttributeDeclarationCollection attributeCollection = null)
         {
             // Get the underlying type for this field.
-            Type standardFieldType = this.ValueTypeDictionary[fieldType];
+            Type standardFieldType = ValueTypeDictionary[fieldType];
 
             // Create a new code member field for the tag field.
             CodeMemberField field = new CodeMemberField(MutationCodeFormatter.CreateShortCodeTypeReference(standardFieldType, MutationNamespaces), fieldName);
@@ -186,7 +197,7 @@ namespace LayoutViewer.CodeDOM
         public void AddCustomTypedField(field_type fieldType, string fieldName, string fieldTypeName, CodeAttributeDeclarationCollection attributeCollection = null)
         {
             // Get the underlying type for this field.
-            Type standardFieldType = this.ValueTypeDictionary[fieldType];
+            Type standardFieldType = ValueTypeDictionary[fieldType];
 
             // If the field name is the same as the type name then we have to append an '@' character.
             if (fieldName.Equals(fieldTypeName) == true)
@@ -211,7 +222,7 @@ namespace LayoutViewer.CodeDOM
         public void AddEnumOrBitmask(MutationCodeScope codeScope, enum_definition field)
         {
             // Determine the underlying type for the enum based on the field type.
-            Type fieldType = this.ValueTypeDictionary[field.type];
+            Type fieldType = ValueTypeDictionary[field.type];
 
             // Create the enum field by creating a new CodeTypeDeclaration.
             CodeTypeDeclaration @enum = new CodeTypeDeclaration(codeScope.Namespace);
@@ -287,7 +298,7 @@ namespace LayoutViewer.CodeDOM
         public void AddExplanationField(string fieldName, string blockName = "", string explanation = "", CodeAttributeDeclarationCollection attributeCollection = null)
         {
             // Get the underlying type for this field.
-            Type standardFieldType = this.ValueTypeDictionary[field_type._field_explanation];
+            Type standardFieldType = ValueTypeDictionary[field_type._field_explanation];
 
             // Create a new code member field for the explanation block.
             CodeMemberField field = new CodeMemberField(MutationCodeFormatter.CreateShortCodeTypeReference(standardFieldType, MutationNamespaces), fieldName);
@@ -377,31 +388,34 @@ namespace LayoutViewer.CodeDOM
 
         #region Caching Functions
 
-        private void BuildValueTypeDictionary()
+        /// <summary>
+        /// Builds the list of .Net types that encapsulate Guerilla field types.
+        /// </summary>
+        private static void BuildValueTypeDictionary()
         {
             // Add the basic field types to the dictionary.
-            this.ValueTypeDictionary = new Dictionary<field_type, Type>((int)field_type._field_type_max);
-            this.ValueTypeDictionary.Add(field_type._field_char_integer, typeof(byte));
-            this.ValueTypeDictionary.Add(field_type._field_short_integer, typeof(short));
-            this.ValueTypeDictionary.Add(field_type._field_long_integer, typeof(int));
-            this.ValueTypeDictionary.Add(field_type._field_angle, typeof(float));
-            this.ValueTypeDictionary.Add(field_type._field_real, typeof(float));
-            this.ValueTypeDictionary.Add(field_type._field_real_fraction, typeof(float));
-            this.ValueTypeDictionary.Add(field_type._field_char_enum, typeof(byte));
-            this.ValueTypeDictionary.Add(field_type._field_enum, typeof(short));
-            this.ValueTypeDictionary.Add(field_type._field_long_enum, typeof(int));
-            this.ValueTypeDictionary.Add(field_type._field_byte_flags, typeof(byte));
-            this.ValueTypeDictionary.Add(field_type._field_word_flags, typeof(short));
-            this.ValueTypeDictionary.Add(field_type._field_long_flags, typeof(int));
-            this.ValueTypeDictionary.Add(field_type._field_byte_block_flags, typeof(byte));
-            this.ValueTypeDictionary.Add(field_type._field_word_block_flags, typeof(short));
-            this.ValueTypeDictionary.Add(field_type._field_long_block_flags, typeof(int));
-            this.ValueTypeDictionary.Add(field_type._field_char_block_index1, typeof(byte));
-            this.ValueTypeDictionary.Add(field_type._field_short_block_index1, typeof(short));
-            this.ValueTypeDictionary.Add(field_type._field_long_block_index1, typeof(int));
-            this.ValueTypeDictionary.Add(field_type._field_char_block_index2, typeof(byte));
-            this.ValueTypeDictionary.Add(field_type._field_short_block_index2, typeof(short));
-            this.ValueTypeDictionary.Add(field_type._field_long_block_index2, typeof(int));
+            ValueTypeDictionary = new Dictionary<field_type, Type>((int)field_type._field_type_max);
+            ValueTypeDictionary.Add(field_type._field_char_integer, typeof(byte));
+            ValueTypeDictionary.Add(field_type._field_short_integer, typeof(short));
+            ValueTypeDictionary.Add(field_type._field_long_integer, typeof(int));
+            ValueTypeDictionary.Add(field_type._field_angle, typeof(float));
+            ValueTypeDictionary.Add(field_type._field_real, typeof(float));
+            ValueTypeDictionary.Add(field_type._field_real_fraction, typeof(float));
+            ValueTypeDictionary.Add(field_type._field_char_enum, typeof(byte));
+            ValueTypeDictionary.Add(field_type._field_enum, typeof(short));
+            ValueTypeDictionary.Add(field_type._field_long_enum, typeof(int));
+            ValueTypeDictionary.Add(field_type._field_byte_flags, typeof(byte));
+            ValueTypeDictionary.Add(field_type._field_word_flags, typeof(short));
+            ValueTypeDictionary.Add(field_type._field_long_flags, typeof(int));
+            ValueTypeDictionary.Add(field_type._field_byte_block_flags, typeof(byte));
+            ValueTypeDictionary.Add(field_type._field_word_block_flags, typeof(short));
+            ValueTypeDictionary.Add(field_type._field_long_block_flags, typeof(int));
+            ValueTypeDictionary.Add(field_type._field_char_block_index1, typeof(byte));
+            ValueTypeDictionary.Add(field_type._field_short_block_index1, typeof(short));
+            ValueTypeDictionary.Add(field_type._field_long_block_index1, typeof(int));
+            ValueTypeDictionary.Add(field_type._field_char_block_index2, typeof(byte));
+            ValueTypeDictionary.Add(field_type._field_short_block_index2, typeof(short));
+            ValueTypeDictionary.Add(field_type._field_long_block_index2, typeof(int));
 
             // Generate a list of types from the Mutation.Halo assembly.
             Type[] assemblyTypes = Assembly.GetAssembly(typeof(GuerillaTypeAttribute)).GetTypes();
@@ -419,108 +433,10 @@ namespace LayoutViewer.CodeDOM
                 foreach (GuerillaTypeAttribute singleAttr in guerillaAttr)
                 {
                     // Add the field type to the value type dictionary.
-                    this.ValueTypeDictionary.Add(singleAttr.FieldType, fieldType);
+                    ValueTypeDictionary.Add(singleAttr.FieldType, fieldType);
                 }
             }
         }
-
-        //private void CacheBinaryReaderWriterMethods()
-        //{
-        //    // Initialize the method cache lists.
-        //    this.BinaryReaderMethods = new Dictionary<Type, string>();
-        //    this.BinaryWriterMethods = new Dictionary<Type, string>();
-
-        //    // Build the list of all binary reader methods we are interested in.
-        //    List<MethodInfo> readerMethods = FindAllReadMethods();
-
-        //    // Add all the binary reader methods to the cache list.
-        //    foreach (var method in readerMethods)
-        //        this.BinaryReaderMethods.Add(method.ReturnType, method.Name);
-
-        //    // Build the list of all binary writer methods we are interested in.
-        //    List<MethodInfo> writerMethods = FindAllWriteMethods();
-
-        //    // Add all of the binary writer methods to the cache list.
-        //    foreach (var method in writerMethods)
-        //        this.BinaryWriterMethods.Add(method.GetParameters().Count() > 1 ? method.GetParameters()[1].ParameterType : method.GetParameters()[0].ParameterType, method.Name);
-        //}
-
-        //private List<MethodInfo> FindAllReadMethods()
-        //{
-        //    // Generate a list of types from the Mutation.Halo assembly.
-        //    Type[] assemblyTypes = Assembly.GetAssembly(typeof(GuerillaTypeAttribute)).GetTypes();
-
-        //    // Build a list of binary reader extension methods by searching the Mutation.Halo namespace.
-        //    List<MethodInfo> extensionMethods = (from type in assemblyTypes
-        //                            where type.IsSealed && !type.IsGenericType && !type.IsNested
-        //                            from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-        //                            where method.IsDefined(typeof(ExtensionAttribute), false)
-        //                            where method.GetParameters()[0].ParameterType == typeof(BinaryReader)
-        //                            select method).ToList();
-
-        //    // Trim the list down to only one method per return type.
-        //    extensionMethods = (from method in extensionMethods
-        //                        group method by method.ReturnType
-        //                            into g
-        //                            select g.First()).ToList();
-
-        //    // Build a list of native binary reader methods.
-        //    List<MethodInfo> methods = (from method in typeof(BinaryReader).GetMethods()
-        //                   where method.ReturnType != typeof(void)
-        //                   select method).Where(x =>
-        //                       {
-        //                           // Verify the name of the method contains the return type.
-        //                           string returnType = x.ReturnType.ToString().Split('.').Last();
-        //                           return x.Name.Contains(returnType);
-        //                       }).ToList();
-
-        //    // Trim the list down to one method per return type.
-        //    methods = (from method in methods
-        //               group method by method.ReturnType
-        //                   into g
-        //                   select g.First()).ToList();
-
-        //    // Combine the two lists and return the final collection.
-        //    return (List<MethodInfo>)methods.Union(extensionMethods).ToList();
-        //}
-
-        //private List<MethodInfo> FindAllWriteMethods()
-        //{
-        //    // Generate a list of types from the Mutation.Halo assembly.
-        //    Type[] assemblyTypes = Assembly.GetAssembly(typeof(GuerillaTypeAttribute)).GetTypes();
-
-        //    // Build a list of binary writer extension methods by searching the Mutation.Halo namespace.
-        //    List<MethodInfo> extensionMethods = (from type in assemblyTypes
-        //                                         where type.IsSealed && !type.IsGenericType && !type.IsNested
-        //                                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-        //                                         where method.IsDefined(typeof(ExtensionAttribute), false)
-        //                                         where method.ReturnType == typeof(void)
-        //                                         where method.Name == "Write"
-        //                                         where method.GetParameters().Count() > 1 && method.GetParameters()[0].ParameterType == typeof(BinaryWriter)
-        //                                         select method).ToList();
-
-        //    // Trim the list down to only one method per parameter type.
-        //    extensionMethods = (from method in extensionMethods
-        //                        group method by method.GetParameters()[1].ParameterType
-        //                            into g
-        //                            select g.First()).ToList();
-
-        //    // Build a list of native binary writer methods.
-        //    List<MethodInfo> methods = (from method in typeof(BinaryWriter).GetMethods()
-        //                                where method.ReturnType == typeof(void)
-        //                                where method.Name == "Write"
-        //                                where method.GetParameters().Count() > 0
-        //                                select method).ToList();
-
-        //    // Trim the list down to one method per parameter type.
-        //    methods = (from method in methods
-        //               group method by method.GetParameters()[0].ParameterType
-        //                   into g
-        //                   select g.First()).ToList();
-
-        //    // Combine the two lists and return the final collection.
-        //    return (List<MethodInfo>)methods.Union(extensionMethods).ToList();
-        //}
 
         #endregion
     }

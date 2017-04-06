@@ -65,8 +65,6 @@ namespace LayoutViewer.CodeDOM
             // Check if this tag block is a tag group.
             if (this.TagBlockDefinition.IsTagGroup == true)
             {
-                string baseType = "";
-
                 // Get the tag group that points to this tag block definition.
                 tag_group tagGroup = reader.TagGroups.First(tag => tag.definition_address == this.TagBlockDefinition.s_tag_block_definition.address);
 
@@ -79,17 +77,20 @@ namespace LayoutViewer.CodeDOM
                     // Now find the code scope for the parent tag layout.
                     MutationCodeScope parentTagScope = parentScope.Types.Values.First(scope => scope.DefinitionAddress == parentTagGroup.definition_address);
 
-                    // Save the base type name.
-                    baseType = parentTagScope.Namespace;
+                    // Create a new tag group class.
+                    childCodeCreator = this.CodeCreator.CreateTagGroupClass(this.TypeName, 
+                        TagBlockDefinitionAttribute.CreateAttributeDeclaration(this.TagBlockDefinition), parentTagScope.Namespace);
                 }
-
-                // Create a new tag group class.
-                childCodeCreator = this.CodeCreator.CreateTagGroupClass(this.TypeName, baseType);
+                else
+                {
+                    // Create a new tag group class.
+                    childCodeCreator = this.CodeCreator.CreateTagGroupClass(this.TypeName, TagBlockDefinitionAttribute.CreateAttributeDeclaration(this.TagBlockDefinition));
+                }
             }
             else
             {
                 // Create a new tag block class.
-                childCodeCreator = this.CodeCreator.CreateTagBlockClass(this.TypeName);
+                childCodeCreator = this.CodeCreator.CreateTagBlockClass(this.TypeName, TagBlockDefinitionAttribute.CreateAttributeDeclaration(this.TagBlockDefinition));
             }
 
             // Process the tag block definition.
@@ -139,8 +140,11 @@ namespace LayoutViewer.CodeDOM
                 // Make sure at least one of the required fields for a UI markup attribute is valid.
                 if (fields[i].Name != string.Empty || units != string.Empty || tooltip != string.Empty)
                 {
-                    // Create the UI markup attribute if the units or tooltip strings are valid.
-                    attributeCollection.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(displayName: displayName, unitsSpecifier: units, tooltipText: tooltip));
+                    // Get the markup flags for this field.
+                    EditorMarkUpFlags markupFlags = MutationCodeFormatter.MarkupFlagsFromFieldName(displayName);
+
+                    // Create the UI markup attribute using the information provided.
+                    attributeCollection.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(flags: markupFlags, displayName: displayName, unitsSpecifier: units, tooltipText: tooltip));
                 }
 
                 // Handle each field accordingly.
@@ -204,14 +208,12 @@ namespace LayoutViewer.CodeDOM
                                     tagBlockDefinition.s_tag_block_definition.address, MutationCodeScopeType.TagBlock);
 
                                 // Create a new class for the tag block definition.
-                                MutationCodeCreator childBlockCodeCreator = this.CodeCreator.CreateTagBlockClass(tagBlockScope.Namespace);
+                                MutationCodeCreator childBlockCodeCreator = this.CodeCreator.CreateTagBlockClass(tagBlockScope.Namespace,
+                                    TagBlockDefinitionAttribute.CreateAttributeDeclaration(tagBlockDefinition));
 
                                 // Process the tag block definition.
                                 ProcessTagBlockDefinition(reader, tagBlockDefinition, childBlockCodeCreator, tagBlockScope, parentScope);
                             }
-
-                            // Build the tag block definition attribute for the field.
-                            attributeCollection.Add(TagBlockDefinitionAttribute.CreateAttributeDeclaration(tagBlockDefinition));
 
                             // Create a field for the tag block.
                             blockCodeCreator.AddTagBlockField(fieldName, tagBlockScope.Namespace, attributeCollection);
@@ -231,20 +233,21 @@ namespace LayoutViewer.CodeDOM
                             {
                                 // Create a new code scope for the tag block definition.
                                 tagBlockScope = parentScope.CreateCodeScopeForType(tagBlockDefinition.s_tag_block_definition.Name,
-                                    tagBlockDefinition.s_tag_block_definition.address, MutationCodeScopeType.TagBlock);
+                                    tagBlockDefinition.s_tag_block_definition.address, MutationCodeScopeType.Struct);
 
                                 // Create a new class for the tag block definition.
-                                MutationCodeCreator childBlockCodeCreator = this.CodeCreator.CreateTagBlockClass(tagBlockScope.Namespace);
+                                MutationCodeCreator childBlockCodeCreator = this.CodeCreator.CreateTagBlockClass(tagBlockScope.Namespace,
+                                    TagBlockDefinitionAttribute.CreateAttributeDeclaration(tagBlockDefinition));
 
                                 // Process the tag block definition.
                                 ProcessTagBlockDefinition(reader, tagBlockDefinition, childBlockCodeCreator, tagBlockScope, parentScope);
                             }
 
                             // Build the tag block definition attribute for the field.
-                            attributeCollection.Add(TagBlockDefinitionAttribute.CreateAttributeDeclaration(tagBlockDefinition));
+                            attributeCollection.Add(TagStructAttribute.CreateAttributeDeclaration());
 
                             // Create a field for the tag block.
-                            blockCodeCreator.AddTagBlockField(fieldName, tagBlockScope.Namespace, attributeCollection);
+                            blockCodeCreator.AddCustomTypedField(field_type._field_struct, fieldName, tagBlockScope.Namespace, attributeCollection);
                             break;
                         }
                     case field_type._field_tag_reference:
@@ -295,13 +298,24 @@ namespace LayoutViewer.CodeDOM
                             i += arrayFields.Count + 1;
                             break;
                         }
-                    case field_type._field_data: break;     // I don't really know what to do about this type just yet...
+                    case field_type._field_data:
+                        {
+                            // Cast the field to a tag_dat_definition.
+                            tag_data_definition tagData = (tag_data_definition)fields[i];
+
+                            // Create a tag data attribute for this field.
+                            attributeCollection.Add(TagDataAttribute.CreateAttributeDeclaration(tagData));
+
+                            // Add the field to the collection.
+                            blockCodeCreator.AddField(fields[i].type, fieldName, attributeCollection);
+                            break;
+                        }
                     case field_type._field_custom: break;
                     case field_type._field_terminator: break;
                     default:
                         {
                             // Check if the value type dictionary contains this field type.
-                            if (blockCodeCreator.ValueTypeDictionary.Keys.Contains(fields[i].type) == false)
+                            if (MutationCodeCreator.ValueTypeDictionary.Keys.Contains(fields[i].type) == false)
                                 break;
 
                             // Add the field to the collection.
