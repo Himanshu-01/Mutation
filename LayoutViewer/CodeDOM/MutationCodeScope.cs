@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mutation.HEK.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -90,14 +91,13 @@ namespace LayoutViewer.CodeDOM
         /// <summary>
         /// Creates a new code safe field name that is unique in the current scope and adds it to the fields list for this scope.
         /// </summary>
+        /// <param name="fieldType">Type of field.</param>
         /// <param name="fieldName">Name of the field</param>
         /// <param name="displayName">The UI mark up display name for the field.</param>
         /// <param name="units">String to receive the units specifier is one is present</param>
         /// <param name="tooltip">String to receive the tooltip text if it is present</param>
-        /// <param name="isPadding">True if the field is a padding field type</param>
-        /// <param name="isExplanation">True if the field is an explanation field type</param>
         /// <returns>The new code safe field name for the field</returns>
-        public string CreateCodeSafeFieldName(string fieldName, out string displayName, out string units, out string tooltip, bool isPadding = false, bool isExplanation = false)
+        public string CreateCodeSafeFieldName(field_type fieldType, string fieldName, out string displayName, out string units, out string tooltip)
         {
             string newFieldName = "";
 
@@ -107,12 +107,12 @@ namespace LayoutViewer.CodeDOM
             tooltip = string.Empty;
 
             // Check if the field is a padding field.
-            if (isPadding == true)
+            if (fieldType == field_type._field_pad || fieldType == field_type._field_skip || fieldType == field_type._field_useless_pad)
             {
                 // Create a new padding field name.
                 return AddPaddingField();
             }
-            else if (isExplanation == true)
+            else if (fieldType == field_type._field_explanation)
             {
                 // Create a new explanation field name.
                 return AddExplanationField();

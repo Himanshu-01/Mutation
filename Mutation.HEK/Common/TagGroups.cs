@@ -74,6 +74,7 @@ namespace Mutation.HEK.Common
 
         // I added this field type to the enum to handle lone IDs since they are a cache only thing.
         _field_datum_index,
+        _field_enum_option,
 
         _field_type_max,
     }

@@ -106,6 +106,14 @@ namespace LayoutViewer.CodeDOM
                 // Generate the layout.
                 layoutCreators[i].CreateTagLayout(reader, this.globalCodeScope);
 
+                // Check if there is a post process function for this block.
+                if (this.postProcessingFunctions.Keys.Contains(layoutCreators[i].TagBlockDefinition.s_tag_block_definition.Name) == true)
+                {
+                    // Invoke the post processing function.
+                    this.postProcessingFunctions[layoutCreators[i].TagBlockDefinition.s_tag_block_definition.Name].Invoke(null,
+                        new object[] { } );
+                }
+
                 // Write it to file.
                 layoutCreators[i].WriteToFile(outputFolder);
             }

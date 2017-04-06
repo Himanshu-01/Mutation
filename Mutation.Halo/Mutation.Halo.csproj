@@ -47,6 +47,7 @@
     <Compile Include="TagGroups\Attributes\EditorMarkUpAttribute.cs" />
     <Compile Include="TagGroups\Attributes\GuerillaTypeAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TagGroups\Attributes\InlineBlockAttribute.cs" />
     <Compile Include="TagGroups\Attributes\PaddingAttribute.cs" />
     <Compile Include="TagGroups\Attributes\TagBlockDefinitionAttribute.cs" />
     <Compile Include="TagGroups\Attributes\TagReferenceAttribute.cs" />

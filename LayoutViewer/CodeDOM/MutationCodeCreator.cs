@@ -24,27 +24,17 @@ namespace LayoutViewer.CodeDOM
         /// </summary>
         public Dictionary<field_type, Type> ValueTypeDictionary { get; private set; }
 
-        /// <summary>
-        /// Gets a list of all the cached BinaryReader methods.
-        /// </summary>
-        //public Dictionary<Type, string> BinaryReaderMethods { get; private set; }
-
-        /// <summary>
-        /// Gets a list of all the cached BinaryWriter methods.
-        /// </summary>
-        //public Dictionary<Type, string> BinaryWriterMethods { get; private set; }
-
         // CodeDOM objects used to create source files.
         private CodeCompileUnit codeUnit;
         private CodeNamespace codeNamespace;
-        private CodeTypeDeclaration codeClass;
 
-        // Reading and writing functions for the code class.
-        //private CodeMemberMethod preProcessMethod;
-        //private CodeMemberMethod postProcessMethod;
+        /// <summary>
+        /// Gets the CodeDOM class object for this class.
+        /// </summary>
+        public CodeTypeDeclaration CodeClass { get; private set; }
 
         // Default import directives for tag definition classes.
-        private readonly string[] namespaces = new string[]
+        private static readonly string[] DefaultNamespaces = new string[]
         {
             "System",
             "System.IO",
@@ -56,7 +46,7 @@ namespace LayoutViewer.CodeDOM
         /// <summary>
         /// Namespaces used in the Mutation tag layouts.
         /// </summary>
-        public static readonly string[] MutationNamespaces = new string[]
+        private static readonly string[] MutationNamespaces = new string[]
         {
             "Mutation.Halo.TagGroups",
             "Mutation.Halo.TagGroups.Attributes",
@@ -67,6 +57,8 @@ namespace LayoutViewer.CodeDOM
         /// Mutation namespace for the tag layouts.
         /// </summary>
         public const string MutationTagsNamespace = "Mutation.Halo.TagGroups.Tags";
+
+        private static readonly string TagBlockDefinitionBaseType = "TagBlockDefinition";
 
         #endregion
 
@@ -84,7 +76,7 @@ namespace LayoutViewer.CodeDOM
             this.codeNamespace = new CodeNamespace(MutationTagsNamespace);
 
             // Add the standard set of import directives to the namespace.
-            foreach (string name in this.namespaces)
+            foreach (string name in DefaultNamespaces)
             {
                 // Add the import to the namespace.
                 this.codeNamespace.Imports.Add(new CodeNamespaceImport(name));
@@ -109,15 +101,15 @@ namespace LayoutViewer.CodeDOM
             MutationCodeCreator codeCreator = new MutationCodeCreator();
 
             // Create the class code type declaration.
-            codeCreator.codeClass = new CodeTypeDeclaration(className);
-            codeCreator.codeClass.IsClass = true;
-            codeCreator.codeClass.BaseTypes.Add(new CodeTypeReference("IMetaDefinition"));
+            codeCreator.CodeClass = new CodeTypeDeclaration(className);
+            codeCreator.CodeClass.IsClass = true;
+            codeCreator.CodeClass.BaseTypes.Add(new CodeTypeReference("IMetaDefinition"));
 
             // Check if the base type was provided.
             if (baseType != string.Empty)
             {
                 // Add the base type to the base types list.
-                codeCreator.codeClass.BaseTypes.Add(new CodeTypeReference(baseType));
+                codeCreator.CodeClass.BaseTypes.Add(new CodeTypeReference(baseType));
             }
 
             //// Initialize the preprocess method for the class.
@@ -137,7 +129,7 @@ namespace LayoutViewer.CodeDOM
             //codeCreator.codeClass.Members.Add(codeCreator.postProcessMethod);
 
             // Add the new tag group class to our namespace.
-            this.codeNamespace.Types.Add(codeCreator.codeClass);
+            this.codeNamespace.Types.Add(codeCreator.CodeClass);
 
             // Return the new code creator.
             return codeCreator;
@@ -155,7 +147,8 @@ namespace LayoutViewer.CodeDOM
             MutationCodeCreator codeCreator = CreateTagGroupClass(blockName);
 
             // Add a region directive to the tag block.
-            //codeCreator.codeClass.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, blockName));
+            codeCreator.CodeClass.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, blockName));
+            codeCreator.CodeClass.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, string.Empty));
 
             // Return the new code creator for the tag block.
             return codeCreator;
@@ -180,7 +173,7 @@ namespace LayoutViewer.CodeDOM
             field.CustomAttributes = attributeCollection;
 
             // Add the field to the class definition.
-            this.codeClass.Members.Add(field);
+            this.CodeClass.Members.Add(field);
         }
 
         /// <summary>
@@ -207,7 +200,7 @@ namespace LayoutViewer.CodeDOM
             field.CustomAttributes = attributeCollection;
 
             // Add the field to the class definition.
-            this.codeClass.Members.Add(field);
+            this.CodeClass.Members.Add(field);
         }
 
         /// <summary>
@@ -242,7 +235,7 @@ namespace LayoutViewer.CodeDOM
 
                 // Create a code safe field name for the enum option.
                 string displayName, units, tooltip;
-                string optionName = codeScope.CreateCodeSafeFieldName(field.options[i], out displayName, out units, out tooltip);
+                string optionName = codeScope.CreateCodeSafeFieldName(field_type._field_enum_option, field.options[i], out displayName, out units, out tooltip);
 
                 // Create a new CodeMemberField for the enum option.
                 CodeMemberField option = new CodeMemberField
@@ -262,21 +255,17 @@ namespace LayoutViewer.CodeDOM
             }
 
             // Add the enum to the class definition.
-            this.codeClass.Members.Add(@enum);
+            this.CodeClass.Members.Add(@enum);
         }
 
         /// <summary>
         /// Creates a new padding field and adds it to the current code object.
         /// </summary>
-        /// <param name="codeScope">Code scope the padding field will be added to.</param>
+        /// <param name="fieldName">Name of the field.</param>
         /// <param name="paddingLength">Size of the padding field.</param>
         /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
-        public void AddPaddingField(MutationCodeScope codeScope, int paddingLength, CodeAttributeDeclarationCollection attributeCollection = null)
+        public void AddPaddingField(string fieldName, int paddingLength, CodeAttributeDeclarationCollection attributeCollection = null)
         {
-            // Create a code safe field name for the padding field.
-            string displayName, units, tooltip;
-            string fieldName = codeScope.CreateCodeSafeFieldName("", out displayName, out units, out tooltip, isPadding: true);
-
             // Create a new code member field for the tag field.
             CodeMemberField field = new CodeMemberField(typeof(byte[]), fieldName);
             field.Attributes = MemberAttributes.Public;
@@ -285,22 +274,18 @@ namespace LayoutViewer.CodeDOM
             field.CustomAttributes = attributeCollection;
 
             // Add the field to the class definition.
-            this.codeClass.Members.Add(field);
+            this.CodeClass.Members.Add(field);
         }
 
         /// <summary>
         /// Creates a new Explanation field using the information provided.
         /// </summary>
-        /// <param name="codeScope">Code scope the explanation field will be added to.</param>
+        /// <param name="fieldName">Name of the explanation field.</param>
         /// <param name="blockName">Name of the explanation block.</param>
         /// <param name="explanation">Explanation for the block.</param>
         /// <param name="attributeCollection">Collection of attributes to be put on the field.</param>
-        public void AddExplanationField(MutationCodeScope codeScope, string blockName = "", string explanation = "", CodeAttributeDeclarationCollection attributeCollection = null)
+        public void AddExplanationField(string fieldName, string blockName = "", string explanation = "", CodeAttributeDeclarationCollection attributeCollection = null)
         {
-            // Create a new field name for the explanation field.
-            string displayName, units, tooltip;
-            string fieldName = codeScope.CreateCodeSafeFieldName(blockName, out displayName, out units, out tooltip, isExplanation: true);
-
             // Get the underlying type for this field.
             Type standardFieldType = this.ValueTypeDictionary[field_type._field_explanation];
 
@@ -332,7 +317,7 @@ namespace LayoutViewer.CodeDOM
             field.CustomAttributes = attributeCollection;
 
             // Add the field to the class definition.
-            this.codeClass.Members.Add(field);
+            this.CodeClass.Members.Add(field);
         }
 
         /// <summary>
@@ -355,7 +340,7 @@ namespace LayoutViewer.CodeDOM
             field.CustomAttributes = attributeCollection;
 
             // Add the field to the class definition.
-            this.codeClass.Members.Add(field);
+            this.CodeClass.Members.Add(field);
         }
 
         /// <summary>

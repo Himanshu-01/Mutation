@@ -36,12 +36,13 @@ namespace LayoutViewer.CodeDOM
         /// <summary>
         /// Code creator for the the tag layout.
         /// </summary>
-        private MutationCodeCreator codeCreator = new MutationCodeCreator();
+        public MutationCodeCreator CodeCreator { get; set; }
 
         public MutationTagLayoutCreator(TagBlockDefinition tagBlockDefinition)
         {
-            // Initialie fields.
+            // Initialize fields.
             this.TagBlockDefinition = tagBlockDefinition;
+            this.CodeCreator = new MutationCodeCreator();
         }
 
         public void CreateCodeScope(MutationCodeScope parentScope)
@@ -83,12 +84,12 @@ namespace LayoutViewer.CodeDOM
                 }
 
                 // Create a new tag group class.
-                childCodeCreator = this.codeCreator.CreateTagGroupClass(this.TypeName, baseType);
+                childCodeCreator = this.CodeCreator.CreateTagGroupClass(this.TypeName, baseType);
             }
             else
             {
                 // Create a new tag block class.
-                childCodeCreator = this.codeCreator.CreateTagBlockClass(this.TypeName);
+                childCodeCreator = this.CodeCreator.CreateTagBlockClass(this.TypeName);
             }
 
             // Process the tag block definition.
@@ -101,13 +102,13 @@ namespace LayoutViewer.CodeDOM
             if (this.TagBlockDefinition.IsTagGroup == true)
             {
                 // Write the tag group to file.
-                this.codeCreator.WriteToFile(string.Format("{0}\\{1}.cs", folder,
+                this.CodeCreator.WriteToFile(string.Format("{0}\\{1}.cs", folder,
                     MutationCodeFormatter.CreateCodeSafeFieldName(this.TagBlockDefinition.s_tag_block_definition.Name)));
             }
             else
             {
                 // Write the block definition to file.
-                this.codeCreator.WriteToFile(string.Format("{0}\\BlockDefinitions\\{1}.cs", folder,
+                this.CodeCreator.WriteToFile(string.Format("{0}\\BlockDefinitions\\{1}.cs", folder,
                     MutationCodeFormatter.CreateCodeSafeFieldName(this.TagBlockDefinition.s_tag_block_definition.Name)));
             }
         }
@@ -128,12 +129,9 @@ namespace LayoutViewer.CodeDOM
             // Loop through all of the fields in the collection.
             for (int i = 0; i < fields.Count; i++)
             {
-                // Check if this field is a padding field.
-                bool bIsPadding = (fields[i].type == field_type._field_pad || fields[i].type == field_type._field_skip || fields[i].type == field_type._field_useless_pad);
-
                 // Create a new field and add it to the scope for this block.
                 string displayName, units, tooltip;
-                string fieldName = blockCodeScope.CreateCodeSafeFieldName(fields[i].Name, out displayName, out units, out tooltip, bIsPadding);
+                string fieldName = blockCodeScope.CreateCodeSafeFieldName(fields[i].type, fields[i].Name, out displayName, out units, out tooltip);
 
                 // Create an attribute collection for any attributes we might add to the field.
                 CodeAttributeDeclarationCollection attributeCollection = new CodeAttributeDeclarationCollection();
@@ -206,7 +204,7 @@ namespace LayoutViewer.CodeDOM
                                     tagBlockDefinition.s_tag_block_definition.address, MutationCodeScopeType.TagBlock);
 
                                 // Create a new class for the tag block definition.
-                                MutationCodeCreator childBlockCodeCreator = this.codeCreator.CreateTagBlockClass(tagBlockScope.Namespace);
+                                MutationCodeCreator childBlockCodeCreator = this.CodeCreator.CreateTagBlockClass(tagBlockScope.Namespace);
 
                                 // Process the tag block definition.
                                 ProcessTagBlockDefinition(reader, tagBlockDefinition, childBlockCodeCreator, tagBlockScope, parentScope);
@@ -236,7 +234,7 @@ namespace LayoutViewer.CodeDOM
                                     tagBlockDefinition.s_tag_block_definition.address, MutationCodeScopeType.TagBlock);
 
                                 // Create a new class for the tag block definition.
-                                MutationCodeCreator childBlockCodeCreator = this.codeCreator.CreateTagBlockClass(tagBlockScope.Namespace);
+                                MutationCodeCreator childBlockCodeCreator = this.CodeCreator.CreateTagBlockClass(tagBlockScope.Namespace);
 
                                 // Process the tag block definition.
                                 ProcessTagBlockDefinition(reader, tagBlockDefinition, childBlockCodeCreator, tagBlockScope, parentScope);
@@ -269,7 +267,7 @@ namespace LayoutViewer.CodeDOM
                             attributeCollection.Add(PaddingAttribute.CreateAttributeDeclaration(fields[i].type, fields[i].definition_address));
 
                             // Add the field with the padding attribute.
-                            blockCodeCreator.AddPaddingField(blockCodeScope, fields[i].definition_address, attributeCollection);
+                            blockCodeCreator.AddPaddingField(fieldName, fields[i].definition_address, attributeCollection);
                             break;
                         }
                     case field_type._field_explanation:
@@ -278,7 +276,7 @@ namespace LayoutViewer.CodeDOM
                             explaination_definition explanation = (explaination_definition)fields[i];
 
                             // Create a field for the explanation block.
-                            blockCodeCreator.AddExplanationField(blockCodeScope, explanation.Name, explanation.Explaination);
+                            blockCodeCreator.AddExplanationField(fieldName, explanation.Name, explanation.Explaination);
                             break;
                         }
                     case field_type._field_array_start:
