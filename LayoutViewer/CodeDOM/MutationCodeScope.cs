@@ -1,4 +1,5 @@
-﻿using Mutation.HEK.Common;
+﻿using Mutation.Halo.TagGroups.Attributes;
+using Mutation.HEK.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -97,8 +98,9 @@ namespace LayoutViewer.CodeDOM
         /// <param name="displayName">The UI mark up display name for the field.</param>
         /// <param name="units">String to receive the units specifier is one is present</param>
         /// <param name="tooltip">String to receive the tooltip text if it is present</param>
+        /// <param name="markupFlags">The UI markup flags for this field.</param>
         /// <returns>The new code safe field name for the field</returns>
-        public string CreateCodeSafeFieldName(field_type fieldType, string fieldName, out string displayName, out string units, out string tooltip)
+        public string CreateCodeSafeFieldName(field_type fieldType, string fieldName, out string displayName, out string units, out string tooltip, out EditorMarkUpFlags markupFlags)
         {
             string newFieldName = "";
 
@@ -106,6 +108,7 @@ namespace LayoutViewer.CodeDOM
             displayName = string.Empty;
             units = string.Empty;
             tooltip = string.Empty;
+            markupFlags = EditorMarkUpFlags.None;
 
             // Check if the field is a padding field.
             if (fieldType == field_type._field_pad || fieldType == field_type._field_skip || fieldType == field_type._field_useless_pad)
@@ -127,7 +130,7 @@ namespace LayoutViewer.CodeDOM
             }
 
             // Convert the field name to a code safe representation.
-            MutationCodeFormatter.ProcessFieldName(fieldName, out newFieldName, out displayName, out units, out tooltip);
+            MutationCodeFormatter.ProcessFieldName(fieldName, out newFieldName, out displayName, out units, out tooltip, out markupFlags);
             if (newFieldName == "")
             {
                 // Create a new no-name field name.
@@ -213,7 +216,8 @@ namespace LayoutViewer.CodeDOM
 
             // Create a code safe type name for the new type.
             string newTypeName, displayName, units, tooltip;
-            MutationCodeFormatter.ProcessFieldName(typeName, out newTypeName, out displayName, out units, out tooltip);
+            EditorMarkUpFlags markupFlags;
+            MutationCodeFormatter.ProcessFieldName(typeName, out newTypeName, out displayName, out units, out tooltip, out markupFlags);
             if (newTypeName == "" || MutationCodeFormatter.IsValidFieldName(newTypeName) == false)
             {
                 // For now we will create a no name type for it, and I will create a preprocessing function later on.

@@ -77,6 +77,7 @@ namespace Mutation.HEK.Guerilla
 
                 // Mark the tag definition as a tag group.
                 this.TagBlockDefinitions[this.TagGroups[i].definition_address].IsTagGroup = true;
+                this.TagGroups[i].Definition = this.TagBlockDefinitions[this.TagGroups[i].definition_address];
             }
 
             // Close the reader.

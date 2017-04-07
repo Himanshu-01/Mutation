@@ -50,6 +50,7 @@
     <Compile Include="TagGroups\Attributes\PaddingAttribute.cs" />
     <Compile Include="TagGroups\Attributes\TagBlockDefinitionAttribute.cs" />
     <Compile Include="TagGroups\Attributes\TagDataAttribute.cs" />
+    <Compile Include="TagGroups\Attributes\TagGroupDefinitionAttribute.cs" />
     <Compile Include="TagGroups\Attributes\TagReferenceAttribute.cs" />
     <Compile Include="TagGroups\Attributes\TagStructAttribute.cs" />
     <Compile Include="TagGroups\FieldTypes\Bounds.cs" />

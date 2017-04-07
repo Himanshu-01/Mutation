@@ -246,7 +246,8 @@ namespace LayoutViewer.CodeDOM
 
                 // Create a code safe field name for the enum option.
                 string displayName, units, tooltip;
-                string optionName = codeScope.CreateCodeSafeFieldName(field_type._field_enum_option, field.options[i], out displayName, out units, out tooltip);
+                EditorMarkUpFlags markupFlags;
+                string optionName = codeScope.CreateCodeSafeFieldName(field_type._field_enum_option, field.options[i], out displayName, out units, out tooltip, out markupFlags);
 
                 // Create a new CodeMemberField for the enum option.
                 CodeMemberField option = new CodeMemberField
@@ -259,7 +260,7 @@ namespace LayoutViewer.CodeDOM
                 };
 
                 // Create a new UI markup attribute and add it to the enum option.
-                option.CustomAttributes.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(displayName: displayName, unitsSpecifier: units, tooltipText: tooltip));
+                option.CustomAttributes.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(flags: markupFlags, displayName: displayName, unitsSpecifier: units, tooltipText: tooltip));
 
                 // Add the option to the enum.
                 @enum.Members.Add(option);

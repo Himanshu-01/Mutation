@@ -70,25 +70,6 @@ namespace LayoutViewer.CodeDOM
             return typeReference;
         }
 
-        public static string FormatDefinitionName(string name)
-        {
-            string newName = "";
-
-            // Split the name using the '_' character as the delimiter.
-            string[] names = name.Split(new char[] { '_' });
-
-            // Loop through all the parts and add each one to the new name.
-            foreach (string part in names)
-            {
-                // Capitalize the first character of the name.
-                newName += char.ToUpper(part[0]);
-                newName += part.Substring(1);
-            }
-
-            // Return the newly formatted name.
-            return newName;
-        }
-
         /// <summary>
         /// Processes a Guerilla UI field name back into a code safe field name with UI markup.
         /// </summary>
@@ -97,13 +78,15 @@ namespace LayoutViewer.CodeDOM
         /// <param name="displayName">The UI mark up display name for the field.</param>
         /// <param name="units">The units associated with the field (UI markup data).</param>
         /// <param name="tooltip">The tooltip associated with the field (UI markup data).</param>
-        public static void ProcessFieldName(string fieldText, out string fieldName, out string displayName, out string units, out string tooltip)
+        /// <param name="markupFlags">The UI markup flags for this field.</param>
+        public static void ProcessFieldName(string fieldText, out string fieldName, out string displayName, out string units, out string tooltip, out EditorMarkUpFlags markupFlags)
         {
             // Satisfy the compiler.
             fieldName = string.Empty;
             displayName = string.Empty;
             units = string.Empty;
             tooltip = string.Empty;
+            markupFlags = EditorMarkUpFlags.None;
 
             // Split the string using the markup delimiters.
             string[] pieces = fieldText.Split(new char[] { FieldNameUnitsCharacter, FieldNameToolTipCharacter });
@@ -136,8 +119,11 @@ namespace LayoutViewer.CodeDOM
             }
 
             // Split out the field name and sanitize it.
-            displayName = CreateCodeSafeStringLiteral(pieces[0]);
+            displayName = CreateCodeSafeStringLiteral(RemoveMarkupFromFieldName(pieces[0]));
             fieldName = CreateCodeSafeFieldName(pieces[0]);
+
+            // Determine the markup flags based on the display name.
+            markupFlags = MarkupFlagsFromFieldName(pieces[0]);
 
             // If the name ends with a safe character just remove it.
             if (fieldName.EndsWith("_") == true)
@@ -244,10 +230,10 @@ namespace LayoutViewer.CodeDOM
         }
 
         /// <summary>
-        /// 
+        /// Determines the editor markup flags that are present for in field name.
         /// </summary>
-        /// <param name="fieldName"></param>
-        /// <returns></returns>
+        /// <param name="fieldName">Field name to check.</param>
+        /// <returns>The EditorMarkUpFlags value for the markup flags present in the field name.</returns>
         public static EditorMarkUpFlags MarkupFlagsFromFieldName(string fieldName)
         {
             EditorMarkUpFlags flags = EditorMarkUpFlags.None;
@@ -263,6 +249,34 @@ namespace LayoutViewer.CodeDOM
 
             // Return the markup flags.
             return flags;
+        }
+
+        /// <summary>
+        /// Sanitizes a Guerilla field name and removes any UI markup characters from the field name.
+        /// </summary>
+        /// <param name="fieldName">Field name to sanitize.</param>
+        /// <returns>A new field name that does not include any UI markup characters.</returns>
+        public static string RemoveMarkupFromFieldName(string fieldName)
+        {
+            string newFieldName = "";
+
+            // Create a list of the Guerilla markup specifier characers.
+            char[] MarkupCharacters = { FieldNameAdvancedCharacter, FieldNameBlockNameCharacter,
+                FieldNameReadOnlyCharacter, FieldNameToolTipCharacter, FieldNameUnitsCharacter };
+
+            // Loop through the entire string and only copy non-markup characters.
+            for (int i = 0; i < fieldName.Length; i++)
+            {
+                // Check if the current character is a markup character.
+                if (MarkupCharacters.Contains(fieldName[i]) == false)
+                {
+                    // Copy the current character.
+                    newFieldName += fieldName[i];
+                }
+            }
+
+            // Return the sanitized field name.
+            return newFieldName;
         }
 
         /// <summary>

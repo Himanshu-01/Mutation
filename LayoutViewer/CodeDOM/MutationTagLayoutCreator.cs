@@ -78,13 +78,13 @@ namespace LayoutViewer.CodeDOM
                     MutationCodeScope parentTagScope = parentScope.Types.Values.First(scope => scope.DefinitionAddress == parentTagGroup.definition_address);
 
                     // Create a new tag group class.
-                    childCodeCreator = this.CodeCreator.CreateTagGroupClass(this.TypeName, 
-                        TagBlockDefinitionAttribute.CreateAttributeDeclaration(this.TagBlockDefinition), parentTagScope.Namespace);
+                    childCodeCreator = this.CodeCreator.CreateTagGroupClass(this.TypeName,
+                        TagGroupDefinitionAttribute.CreateAttributeDeclaration(tagGroup), parentTagScope.Namespace);
                 }
                 else
                 {
                     // Create a new tag group class.
-                    childCodeCreator = this.CodeCreator.CreateTagGroupClass(this.TypeName, TagBlockDefinitionAttribute.CreateAttributeDeclaration(this.TagBlockDefinition));
+                    childCodeCreator = this.CodeCreator.CreateTagGroupClass(this.TypeName, TagGroupDefinitionAttribute.CreateAttributeDeclaration(tagGroup));
                 }
             }
             else
@@ -132,17 +132,15 @@ namespace LayoutViewer.CodeDOM
             {
                 // Create a new field and add it to the scope for this block.
                 string displayName, units, tooltip;
-                string fieldName = blockCodeScope.CreateCodeSafeFieldName(fields[i].type, fields[i].Name, out displayName, out units, out tooltip);
+                EditorMarkUpFlags markupFlags;
+                string fieldName = blockCodeScope.CreateCodeSafeFieldName(fields[i].type, fields[i].Name, out displayName, out units, out tooltip, out markupFlags);
 
                 // Create an attribute collection for any attributes we might add to the field.
                 CodeAttributeDeclarationCollection attributeCollection = new CodeAttributeDeclarationCollection();
 
                 // Make sure at least one of the required fields for a UI markup attribute is valid.
-                if (fields[i].Name != string.Empty || units != string.Empty || tooltip != string.Empty)
+                if (markupFlags != EditorMarkUpFlags.None || displayName != string.Empty || units != string.Empty || tooltip != string.Empty)
                 {
-                    // Get the markup flags for this field.
-                    EditorMarkUpFlags markupFlags = MutationCodeFormatter.MarkupFlagsFromFieldName(displayName);
-
                     // Create the UI markup attribute using the information provided.
                     attributeCollection.Add(EditorMarkUpAttribute.CreateAttributeDeclaration(flags: markupFlags, displayName: displayName, unitsSpecifier: units, tooltipText: tooltip));
                 }

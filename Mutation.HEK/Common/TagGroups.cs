@@ -242,6 +242,11 @@ namespace Mutation.HEK.Common
         /// </summary>
         public string ParentGroupTag { get { return Guerilla.Guerilla.GroupTagToString(this.parent_group_tag); } }
 
+        /// <summary>
+        /// Gets the tag block definition this tag goup points to.
+        /// </summary>
+        public TagBlockDefinition Definition { get; set; }
+
         public void Read(IntPtr h2LangLib, BinaryReader reader)
         {
             // Read all the fields from the stream.

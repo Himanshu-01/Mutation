@@ -48,7 +48,7 @@ namespace Mutation.Halo.TagGroups.Attributes
         public static CodeAttributeDeclaration CreateAttributeDeclaration(TagBlockDefinition definition)
         {
             // Get the latest field set from the guerilla definition.
-            tag_field_set fieldSet = definition.TagFieldSets[definition.TagFieldSetLatestIndex];
+            tag_field_set fieldSet = definition.TagFieldSets[definition.GetFieldSetIndexClosestToH2Xbox()];
 
             // Setup a TagBlockDefinitionAttribute attribute using the definition info.
             CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(typeof(TagBlockDefinitionAttribute).Name, new CodeAttributeArgument[] 
