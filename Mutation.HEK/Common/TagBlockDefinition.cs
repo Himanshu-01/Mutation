@@ -90,6 +90,8 @@ namespace Mutation.HEK.Common
                     LatestFieldSet = 0;
                     break;
                 case "model_block":
+                case "instantaneous_response_damage_effect_marker_struct_block":
+                case "instantaneous_response_damage_effect_struct_block":
                     LatestFieldSet = 1;
                     break;
                 case "animation_pool_block":

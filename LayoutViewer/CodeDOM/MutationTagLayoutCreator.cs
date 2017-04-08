@@ -1,4 +1,5 @@
-﻿using Mutation.Halo.TagGroups.Attributes;
+﻿using LayoutViewer.Guerilla;
+using Mutation.Halo.TagGroups.Attributes;
 using Mutation.HEK.Common;
 using Mutation.HEK.Common.TagFieldDefinitions;
 using Mutation.HEK.Guerilla;
@@ -68,6 +69,13 @@ namespace LayoutViewer.CodeDOM
                 // Get the tag group that points to this tag block definition.
                 tag_group tagGroup = reader.TagGroups.First(tag => tag.definition_address == this.TagBlockDefinition.s_tag_block_definition.address);
 
+                // Compute the size of the definition.
+                int definitionSize = TagLayoutValidator.ComputeGuerillaDefinitionSize(reader, tagGroup.Definition.TagFields[tagGroup.Definition.GetFieldSetIndexClosestToH2Xbox()]);
+                if (definitionSize != tagGroup.Definition.TagFieldSets[tagGroup.Definition.GetFieldSetIndexClosestToH2Xbox()].size)
+                {
+
+                }
+
                 // Check if the tag group has a parent tag group it inherits from.
                 if (tagGroup.ParentGroupTag != string.Empty)
                 {
@@ -89,6 +97,13 @@ namespace LayoutViewer.CodeDOM
             }
             else
             {
+                // Compute the size of the definition.
+                int definitionSize = TagLayoutValidator.ComputeGuerillaDefinitionSize(reader, this.TagBlockDefinition.TagFields[this.TagBlockDefinition.GetFieldSetIndexClosestToH2Xbox()]);
+                if (definitionSize != this.TagBlockDefinition.TagFieldSets[this.TagBlockDefinition.GetFieldSetIndexClosestToH2Xbox()].size)
+                {
+
+                }
+
                 // Create a new tag block class.
                 childCodeCreator = this.CodeCreator.CreateTagBlockClass(this.TypeName, TagBlockDefinitionAttribute.CreateAttributeDeclaration(this.TagBlockDefinition));
             }
@@ -330,7 +345,7 @@ namespace LayoutViewer.CodeDOM
         /// <param name="fields">Fields that belong to the array.</param>
         /// <param name="startIndex">Index of the array_start field.</param>
         /// <returns>List of fields inside of the array.</returns>
-        private List<tag_field> CreateArrayFieldList(List<tag_field> fields, int startIndex)
+        public static List<tag_field> CreateArrayFieldList(List<tag_field> fields, int startIndex)
         {
             // Create a new list to hold all of the fields in the array.
             List<tag_field> arrayFields = new List<tag_field>();

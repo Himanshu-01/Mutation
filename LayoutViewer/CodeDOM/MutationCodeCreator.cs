@@ -32,7 +32,6 @@ namespace LayoutViewer.CodeDOM
                 if (valueTypeDictionary == null)
                 {
                     // Initialize and build the dictionary.
-                    valueTypeDictionary = new Dictionary<field_type, Type>();
                     BuildValueTypeDictionary();
                 }
 

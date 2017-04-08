@@ -1,4 +1,5 @@
-﻿using LayoutViewer.Guerilla.Attributes;
+﻿using LayoutViewer.Guerilla;
+using LayoutViewer.Guerilla.Attributes;
 using Mutation.HEK.Common;
 using Mutation.HEK.Common.TagFieldDefinitions;
 using Mutation.HEK.Guerilla;
@@ -52,6 +53,22 @@ namespace LayoutViewer.CodeDOM
             {
                 // Create the subfolder for block definitions.
                 Directory.CreateDirectory(string.Format("{0}\\BlockDefinitions", outputFolder));
+            }
+
+            // Loop through all of the definitions in Guerilla and verify the size of each one.
+            for (int i = 0; i < reader.TagBlockDefinitions.Keys.Count; i++)
+            {
+                // Get the tag block definition.
+                TagBlockDefinition tagBlock = reader.TagBlockDefinitions[reader.TagBlockDefinitions.Keys.ElementAt(i)];
+
+                // Verify the definition address is correct.
+                int definitionSize = TagLayoutValidator.ComputeGuerillaDefinitionSize(reader, tagBlock.TagFields[tagBlock.GetFieldSetIndexClosestToH2Xbox()]);
+                if (definitionSize != tagBlock.TagFieldSets[tagBlock.GetFieldSetIndexClosestToH2Xbox()].size)
+                {
+                    // Print the details to the console.
+                    System.Diagnostics.Debug.WriteLine(string.Format("Size mismatch on block \"{0}\" computed: {1} actual: {2}", tagBlock.s_tag_block_definition.Name,
+                        definitionSize, tagBlock.TagFieldSets[tagBlock.GetFieldSetIndexClosestToH2Xbox()].size));
+                }
             }
 
             // Build a list of references for each tag block definition we have.

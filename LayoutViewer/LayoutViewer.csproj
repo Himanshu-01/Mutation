@@ -96,6 +96,7 @@
     </Compile>
     <Compile Include="Guerilla\Attributes\GuerillaPostProcessAttribute.cs" />
     <Compile Include="Guerilla\Attributes\GuerillaPreProcessAttribute.cs" />
+    <Compile Include="Guerilla\TagLayoutValidator.cs" />
     <Compile Include="Guerilla\Tags\bitmap_block.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
