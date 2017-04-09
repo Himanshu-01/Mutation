@@ -54,6 +54,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="IDA\" />
     <Folder Include="Sapien\" />
     <Folder Include="Tool\" />
   </ItemGroup>

@@ -43,8 +43,9 @@ namespace Mutation.Halo.TagGroups.Attributes
         /// Creates a TagGroupDefinitionAttribute CodeDOM declaration.
         /// </summary>
         /// <param name="tagGroup">Guerill tag group definition.</param>
+        /// <param name="definitionSize">Alternative calculated size of the definition, overrides fieldSet.size</param>
         /// <returns>A CodeDOM attribute declaration.</returns>
-        public static CodeAttributeDeclaration CreateAttributeDeclaration(tag_group tagGroup)
+        public static CodeAttributeDeclaration CreateAttributeDeclaration(tag_group tagGroup, int definitionSize=0)
         {
             // Get the latest field set from the guerilla definition.
             tag_field_set fieldSet = tagGroup.Definition.TagFieldSets[tagGroup.Definition.GetFieldSetIndexClosestToH2Xbox()];
@@ -52,7 +53,7 @@ namespace Mutation.Halo.TagGroups.Attributes
             // Setup a TagGroupDefinitionAttribute attribute using the definition info.
             CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(typeof(TagGroupDefinitionAttribute).Name, new CodeAttributeArgument[]
             {
-                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("sizeOf: {0}", fieldSet.size))),
+                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("sizeOf: {0}", (definitionSize != 0 ? definitionSize : fieldSet.size)))),
                 new CodeAttributeArgument(new CodeSnippetExpression(string.Format("version: {0}", tagGroup.version))),
                 new CodeAttributeArgument(new CodeSnippetExpression(string.Format("groupTag: \"{0}\"", tagGroup.GroupTag)))
             });

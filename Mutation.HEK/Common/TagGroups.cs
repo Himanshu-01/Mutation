@@ -117,6 +117,8 @@ namespace Mutation.HEK.Common
         //byteswap definition
         //runtime data
 
+        public int address;
+
         public string size_string;
         /// <summary>
         /// Gets the sizeof string for this tag_field_set.
@@ -126,6 +128,7 @@ namespace Mutation.HEK.Common
         public void Read(IntPtr h2LangLib, BinaryReader reader)
         {
             // Read all the fields from the stream.
+            this.address = (int)reader.BaseStream.Position + Guerilla.Guerilla.BaseAddress;
             this.version = new s_tag_field_set_version();
             this.version.Read(h2LangLib, reader);
             this.size = reader.ReadInt32();

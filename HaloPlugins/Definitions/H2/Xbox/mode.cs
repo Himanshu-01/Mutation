@@ -74,6 +74,7 @@ namespace HaloPlugins.Xbox
                new Value("Rigid Node Index", typeof(byte)),
                new Value("", typeof(byte)),
                new Flags("Flags", new string[] { "Geometry_Postprocessed" }, 8),
+               // Not used in cache.
                new TagBlock("Section Data", 88, 1, new MetaNode[] { 
                    new Padding(88),
                }),

@@ -191,7 +191,7 @@ namespace Mutation.HEK.Guerilla
                 }
 
                 // Check if this is the latest tag field set.
-                if (tagBlockDef.s_tag_block_definition.field_set_latest_address == tagBlockDef.TagFieldSets[i].fields_address)
+                if (tagBlockDef.s_tag_block_definition.field_set_latest_address == tagBlockDef.TagFieldSets[i].address)
                     tagBlockDef.TagFieldSetLatestIndex = i;
 
                 // Initialize the tag field list.

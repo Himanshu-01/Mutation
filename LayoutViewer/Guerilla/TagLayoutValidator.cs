@@ -62,6 +62,76 @@ namespace LayoutViewer.Guerilla
 
         #endregion
 
+        /// <summary>
+        /// Computes the size of a tag layout definition using the Mutation field type sizes.
+        /// </summary>
+        /// <param name="reader">Guerilla reader instance.</param>
+        /// <param name="fields">Fields in the tag layout definition.</param>
+        /// <returns>Size of the fields in terms of Mutation field type sizes.</returns>
+        public static int ComputeMutationDefinitionSize(GuerillaReader reader, List<tag_field> fields)
+        {
+            int definitionSize = 0;
+
+            // Loop through all of the fields and compute the size of the definition.
+            for (int i = 0; i < fields.Count; i++)
+            {
+                // Handle the field size accordingly.
+                switch (fields[i].type)
+                {
+                    case field_type._field_struct:
+                        {
+                            // Cast the field to a tag_struct_definition.
+                            tag_struct_definition tagStruct = (tag_struct_definition)fields[i];
+
+                            // Get the definition struct from the field address.
+                            TagBlockDefinition tagBlockDefinition = reader.TagBlockDefinitions[tagStruct.block_definition_address];
+
+                            // Get the size of the struct definition from the field_set most close to h2x.
+                            definitionSize += ComputeMutationDefinitionSize(reader, tagBlockDefinition.TagFields[tagBlockDefinition.GetFieldSetIndexClosestToH2Xbox()]);
+                            break;
+                        }
+                    case field_type._field_array_start:
+                        {
+                            // Get a list of fields that are in the array.
+                            List<tag_field> arrayFields = MutationTagLayoutCreator.CreateArrayFieldList(fields, i);
+
+                            // Get the size of the array fields and multiply it by the length of the array.
+                            definitionSize += fields[i].definition_address * ComputeMutationDefinitionSize(reader, arrayFields);
+
+                            // Skip the array fields and the array terminator.
+                            i += arrayFields.Count + 1;
+                            break;
+                        }
+                    case field_type._field_pad:
+                    case field_type._field_skip:
+                        {
+                            // Field size is the length of the padding field.
+                            definitionSize += fields[i].definition_address;
+                            break;
+                        }
+                    default:
+                        {
+                            // Make sure the type array contains the field type.
+                            if (MutationFieldSizes.Keys.Contains(fields[i].type) == false)
+                                break;
+
+                            // Get the field size from the type array.
+                            definitionSize += MutationFieldSizes[fields[i].type];
+                            break;
+                        }
+                }
+            }
+
+            // Return the definition size.
+            return definitionSize;
+        }
+
+        /// <summary>
+        /// Computes the size of a tag layout definition using Guerilla field type sizes.
+        /// </summary>
+        /// <param name="reader">Guerilla reader instance</param>
+        /// <param name="fields">Fields in the tag layout definition.</param>
+        /// <returns>Size of the fields in terms of Guerilla field type sizes.</returns>
         public static int ComputeGuerillaDefinitionSize(GuerillaReader reader, List<tag_field> fields)
         {
             int definitionSize = 0;
@@ -122,6 +192,9 @@ namespace LayoutViewer.Guerilla
 
         #region Caching Functions
 
+        /// <summary>
+        /// Builds a dictionary of Guerilla field types and their corresponding size in terms of Mutation field types.
+        /// </summary>
         private static void CacheMutationFieldSizes()
         {
             // Add the basic field types to the dictionary.
@@ -148,6 +221,13 @@ namespace LayoutViewer.Guerilla
             MutationFieldSizes.Add(field_type._field_short_block_index2, sizeof(short));
             MutationFieldSizes.Add(field_type._field_long_block_index2, sizeof(int));
 
+            // Miscellaneous fields.
+            MutationFieldSizes.Add(field_type._field_array_start, 0);
+            MutationFieldSizes.Add(field_type._field_array_end, 0);
+            MutationFieldSizes.Add(field_type._field_custom, 0);
+            MutationFieldSizes.Add(field_type._field_terminator, 0);
+            MutationFieldSizes.Add(field_type._field_useless_pad, 0);
+
             // Generate a list of types from the Mutation.Halo assembly.
             Type[] assemblyTypes = Assembly.GetAssembly(typeof(GuerillaTypeAttribute)).GetTypes();
 
@@ -163,12 +243,24 @@ namespace LayoutViewer.Guerilla
                 GuerillaTypeAttribute[] guerillaAttr = (GuerillaTypeAttribute[])fieldType.GetCustomAttributes(typeof(GuerillaTypeAttribute), false);
                 foreach (GuerillaTypeAttribute singleAttr in guerillaAttr)
                 {
-                    // Add the field size to the value size dictionary.
-                    MutationFieldSizes.Add(singleAttr.FieldType, fieldType.StructLayoutAttribute.Size);
+                    // Check for the special case tag_block class.
+                    if (singleAttr.FieldType == field_type._field_block)
+                    {
+                        // Add the field size to the value size dictionary.
+                        MutationFieldSizes.Add(singleAttr.FieldType, 8);
+                    }
+                    else
+                    {
+                        // Add the field size to the value size dictionary using the StructLayout attributue.
+                        MutationFieldSizes.Add(singleAttr.FieldType, fieldType.StructLayoutAttribute.Size);
+                    }
                 }
             }
         }
 
+        /// <summary>
+        /// Builds a dictionary of Guerilla field types and their corresponding size in terms of Guerilla field types.
+        /// </summary>
         private static void CacheGuerillaFieldSizes()
         {
             // Initialize the field size dictionary.
@@ -270,6 +362,7 @@ namespace LayoutViewer.Guerilla
                         }
                     case field_type._field_string:
                     case field_type._field_vertex_buffer:
+                    //case field_type._field_old_string_id:
                         {
                             // 32-byte field.
                             guerillaFieldSizes.Add(fieldType, 32);

@@ -82,7 +82,6 @@ namespace Mutation.HEK.Common
                     break;
                 case "hud_globals_block":
                 case "global_new_hud_globals_struct_block":
-                case "sound_promotion_parameters_struct_block":
                 case "sound_gestalt_promotions_block":
                 case "sound_block":
                 case "tag_block_index_struct_block":

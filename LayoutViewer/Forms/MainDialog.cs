@@ -519,14 +519,14 @@ namespace LayoutViewer.Forms
 
         #region Guerilla Code Parsing
 
-        private void LoadTagDefinition(int address, int fieldIndex, ViewMode viewMode, bool isTagGroup)
+        private void LoadTagDefinition(int address, int fieldIndex, ViewMode viewMode, bool isTagGroup, bool isStruct=false)
         {
             // Get the tag_block_definition from the guerilla dictionary using the address.
             TagBlockDefinition tag_block = this.guerilla.TagBlockDefinitions[address];
 
             // Pull out the field set we are loading into the code view.
             if (fieldIndex == -1)
-                fieldIndex = tag_block.TagFieldSetLatestIndex;
+                fieldIndex = tag_block.GetFieldSetIndexClosestToH2Xbox();
             tag_field_set fieldSet = tag_block.TagFieldSets[fieldIndex];
 
             // Create the main struct for this tag field set in the output file.
@@ -564,9 +564,17 @@ namespace LayoutViewer.Forms
                 WriteGuerillaCodeLine("struct {0}", tag_block.s_tag_block_definition.Name);
                 WriteGuerillaCodeLine("{");
             }
-            else
+            else if (isStruct == true)
             {
                 // Create the struct header.
+                WriteGuerillaCodeLine("TAG_STRUCT({0}, {1}, {2});", tag_block.s_tag_block_definition.Name,
+                    tag_block.s_tag_block_definition.MaximumElementCount, fieldSet.SizeString);
+                WriteGuerillaCodeLine("struct {0}", tag_block.s_tag_block_definition.Name);
+                WriteGuerillaCodeLine("{");
+            }
+            else
+            {
+                // Create the block header.
                 WriteGuerillaCodeLine("TAG_BLOCK({0}, {1}, {2});", tag_block.s_tag_block_definition.Name,
                     tag_block.s_tag_block_definition.MaximumElementCount, fieldSet.SizeString);
                 WriteGuerillaCodeLine("struct {0}", tag_block.s_tag_block_definition.Name);
@@ -803,7 +811,7 @@ namespace LayoutViewer.Forms
                             }
 
                             // Write a reference to the field.
-                            WriteGuerillaField(def.s_tag_block_definition.Name, fieldName, fieldComment);
+                            WriteGuerillaField(string.Format("tag_block<{0}>", def.s_tag_block_definition.Name), fieldName, fieldComment);
                             WriteGuerillaCodeLine("");
                             break;
                         }
@@ -819,7 +827,7 @@ namespace LayoutViewer.Forms
                             if (viewMode == ViewMode.Advanced)
                             {
                                 // Recursively process the tag block.
-                                LoadTagDefinition(tagStruct.block_definition_address, -1, viewMode, false);
+                                LoadTagDefinition(tagStruct.block_definition_address, -1, viewMode, false, true);
                             }
 
                             // Write a reference to the field.

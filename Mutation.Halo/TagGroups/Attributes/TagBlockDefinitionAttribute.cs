@@ -44,8 +44,9 @@ namespace Mutation.Halo.TagGroups.Attributes
         /// Creates a TagBlockDefinitionAttribute CodeDOM declaration.
         /// </summary>
         /// <param name="definition">Guerilla tag block definition.</param>
+        /// <param name="definitionSize">Alternative calculated size of the definition, overrides definition.TagFieldSets[x].size</param>
         /// <returns>A CodeDOM attribute declaration.</returns>
-        public static CodeAttributeDeclaration CreateAttributeDeclaration(TagBlockDefinition definition)
+        public static CodeAttributeDeclaration CreateAttributeDeclaration(TagBlockDefinition definition, int definitionSize=0)
         {
             // Get the latest field set from the guerilla definition.
             tag_field_set fieldSet = definition.TagFieldSets[definition.GetFieldSetIndexClosestToH2Xbox()];
@@ -54,7 +55,7 @@ namespace Mutation.Halo.TagGroups.Attributes
             CodeAttributeDeclaration attribute = new CodeAttributeDeclaration(typeof(TagBlockDefinitionAttribute).Name, new CodeAttributeArgument[] 
             {
                 // CodeDOM doesn't seem to support named parameters so we are going to do some h4x here...
-                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("sizeOf: {0}", fieldSet.size))),
+                new CodeAttributeArgument(new CodeSnippetExpression(string.Format("sizeOf: {0}", (definitionSize != 0 ? definitionSize : fieldSet.size)))),
                 new CodeAttributeArgument(new CodeSnippetExpression(string.Format("alignment: {0}", fieldSet.alignment_bit != 0 ? (1 << fieldSet.alignment_bit) : 4))),
                 new CodeAttributeArgument(new CodeSnippetExpression(string.Format("maxBlockCount: {0}", definition.s_tag_block_definition.maximum_element_count)))
             });
